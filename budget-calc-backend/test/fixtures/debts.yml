@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  balance: MyString
+  interest_rate: MyString
+  payment_date: MyString
+  minimum_payment: MyString
+  budget: one
+
+two:
+  name: MyString
+  balance: MyString
+  interest_rate: MyString
+  payment_date: MyString
+  minimum_payment: MyString
+  budget: two

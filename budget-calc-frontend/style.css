@@ -1,0 +1,164 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-image: url('images/budgetSiteBackground.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-bottom: black solid 1px;
+  margin: 0 auto;
+  height: 250px;
+  border-radius: 0 0 10px 10px;
+}
+
+header h2 {
+  text-align: right;
+  font-size: 60px;
+  color: white;
+  padding: 100px 50px 50px 250px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+  grid-gap: 20px;
+  padding: 10px 0px 30px 5px;
+  height: 75%;
+}
+
+div {
+  background-color: white;
+  width: 95%;
+  padding: 10px 10px 20px 10px;
+  margin: 5px;
+  border-radius: 10px;
+  position: relative;
+}
+
+div.budgetCard {
+  display: grid;
+  grid-template-rows: 120px auto auto;
+  grid-gap: 30px;
+  background-color: #eeeeee;
+  height: auto;
+  box-shadow: 10px 10px grey;
+}
+
+div.budgetTitle {
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: auto auto;
+  height: 60px;
+  border: darkslategray solid 1px;
+}
+
+/* User Section */
+
+div.usersCard {
+  display: grid;
+  grid-template-rows: auto auto 30px;
+  height: auto;
+  width: 96%;
+  background-color: grey;
+  box-shadow: 10px 10px black;
+}
+
+div.usersCard .innerUserDiv{
+  display: grid;
+  background-color: black;
+  border: black solid 1px;
+  padding: 10px 10px 30px 10px;
+  height: auto;
+  width: auto;
+}
+
+div.user {
+  background-color: #888888;
+  width: 90%;
+  height: 90%;
+}
+
+div.debtCard {
+  display: grid;
+  grid-template-rows: auto 30px;
+  height: auto;
+  width: 96%;
+  background-color: grey;
+  box-shadow: 10px 10px black;
+}
+
+div.debtCard .innerDebtDiv{
+  display: grid;
+  background-color: #888888;
+  border: black solid 1px;
+  padding: 10px 10px 30px 10px;
+  height: auto;
+  width: auto;
+}
+
+div.expenseCard {
+  display: grid;
+  grid-template-rows: auto 30px;
+  height: auto;
+  width: 96%;
+  background-color: grey;
+  box-shadow: 10px 10px black;
+}
+
+div.expenseCard .innerExpenseDiv{
+  display: grid;
+  background-color: #888888;
+  border: black solid 1px;
+  padding: 10px 10px 30px 10px;
+  height: auto;
+  width: auto;
+}
+
+/* Modal Stuff */
+
+
+p {
+  font-size: 1.5em;
+  color: black;
+  font-family: Helvetica;
+}
+
+li {
+  font-size: 1.05em;
+  list-style: none;
+  padding-right: 20px;
+}
+
+button {
+  font-size: 20px;
+  color: #fff;
+  background-color: green;
+  border-radius: 10px;
+}
+
+/* @media only screen and (min-width: 400px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media only screen and (min-width: 700px) {
+  main {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  main {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media only screen and (min-width: 1300px) {
+  main {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+} */
