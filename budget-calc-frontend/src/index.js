@@ -120,7 +120,7 @@ class Budget {
     let innerUserDiv = createDiv("innerUserDiv")
 
     this.users.forEach (userInfo => {
-      innerUserDiv.append(new User(userInfo.name, userInfo.jobs).generateUserCard())
+      innerUserDiv.append(new User(userInfo.id, userInfo.name, userInfo.jobs, this.id).generateUserCard())
       innerUserDiv.style.gridTemplateColumns += " auto"
     })
 
@@ -153,8 +153,7 @@ class Budget {
       newUserEvent.preventDefault()
       let newUserName = newUserEvent.target.name.value;
       if (newUserName) {
-        new User(name)
-        // submitNewUserReq(newUserName)
+        new User("",newUserName,[],this.id).submitNewUser();
       }
     })
     return userFormContainer
@@ -214,9 +213,11 @@ class Budget {
 }
 
 class User {
-  constructor (firstName, jobs){
+  constructor (userId="", firstName, jobs = [], budgetId){
+    this.id = userId
     this.name = firstName
     this.jobs = jobs
+    this.budgetId = budgetId
   }
 
   get income(){
@@ -231,6 +232,7 @@ class User {
     let userDiv = createDiv("user")
 
     userDiv.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
+    userDiv.append(createButton("deleteUser", "remove", this.removeUser, this))
 
     let jobList = document.createElement("ul")
     this.jobs.forEach(jobInfo => {
@@ -242,6 +244,54 @@ class User {
     return userDiv
   }
 
+  submitNewUser(){
+    let formData = {
+      "name": this.name,
+      "jobs": this.jobs,
+      "budgetId": this.budgetId
+    };
+  
+    let configObj = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(formData)
+    }
+  
+    return fetch(USER_URL,configObj)
+      .then(response => response.json())
+      .then(json => console.log(json))
+      .catch(error => document.body.innerHTML = "<h1>"+error.message+"</h1>");
+  }
+
+  removeUser(event, user){
+    console.log(user)
+    let deleteUserUrl = `${USER_URL}/${user.id}`
+    console.log(deleteUserUrl)
+
+    let configInfo = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: ""
+    }
+    
+    return fetch(deleteUserUrl, configInfo)
+      .then(resp => resp.json())
+      .then(json => {
+        if (json.error) {
+          console.log(json)
+        } else {
+          console.log(json)
+        }
+      })
+      .catch(error => console.log(error.message));
+  }
+  
   addJob(targetInfo, userObj){
     console.log(targetInfo, userObj)
   }
