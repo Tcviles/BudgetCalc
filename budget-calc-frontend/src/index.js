@@ -4,7 +4,13 @@ const USER_URL = `${BASE_URL}/users`
 const JOB_URL = `${BASE_URL}/jobs`
 const DEBT_URL = `${BASE_URL}/debts`
 const EXPENSE_URL = `${BASE_URL}/expenses`
+
 const mainBody = document.querySelector("main")
+const budgetCard = document.querySelector(".budgetCard")
+const budgetTitleDiv = document.querySelector(".budgetTitle")
+const usersDiv = document.querySelector(".usersCard")
+const debtDiv = document.querySelector(".debtCard")
+const expensesDiv = document.querySelector(".expenseCard")
 
 function createDiv(className){
   let div = document.createElement("div")
@@ -38,30 +44,28 @@ function createLi(id, liText) {
   return li
 }
 
-function addPopup() {
-  let modalWindow = createDiv("modal")
-  modalWindow.id = "modal1"
-  let modalDialog = createDiv("modal-dialog")
+function createInput(className, type="text", inputName="", value= "", placeholder = "") {
+  let input = document.createElement("input")
+  input.classList.add(className)
+  input.type = type
+  input.name = inputName
+  input.value = value
+  input.placeholder = placeholder
 
-  let modalHeader = document.createElement("header")
-  modalHeader.classList.add("modal-header")
-  let closeModalButton = document.createElement("button")
-  closeModalButton.classList.add("close-modal")
-  closeModalButton.setAttribute("aria-label","close modal")
-  modalHeader.append(closeModalButton)
+  return input
+}
 
-  modalDialog.append(modalHeader)
+function createForm(className, formHeadingText, inputs) {
+  let form = document.createElement("form")
+  form.classList.add(className)
 
-  let modalContent = document.createElement("section")
-  modalContent.classList.add("modal-content")
-  modalDialog.append(modalContent)
+  let formHeading = document.createElement("h3")
+  formHeading.innerText = formHeadingText
+  form.append(formHeading)
 
-  let modalFooter = document.createElement("footer")
-  modalFooter.classList.add("modal-footer")
-  modalDialog.append(modalFooter)
+  inputs.forEach(input => form.append(input))
 
-  modalWindow.append(modalDialog)
-  return modalWindow
+  return form
 }
 
 function generateBudgets() {
@@ -83,10 +87,7 @@ class Budget {
     this.expenses = budgetInfo.expenses
   }
 
-  generateBudgetCard(){
-    let budgetCard = createDiv("budgetCard")
-    budgetCard.id = `budget${this.id}`
-  
+  generateBudgetCard(){  
     budgetCard.append(this.generateBudgetTitle())
     budgetCard.append(this.generateUserDiv())
     budgetCard.append(this.generateDebtDiv())
@@ -95,9 +96,7 @@ class Budget {
     mainBody.append(budgetCard)
   }
 
-  generateBudgetTitle(){
-    let budgetTitleDiv = createDiv("budgetTitle")
-    
+  generateBudgetTitle(){    
     budgetTitleDiv.append(createParagraph("budgetTitle","What is this budgets priority?"))
     budgetTitleDiv.append(createButton("priority", this.priority, this.togglePriority, this))
 
@@ -109,12 +108,10 @@ class Budget {
   }
 
   generateUserDiv() {
-    let usersDiv = createDiv("usersCard")
-
     usersDiv.append(createParagraph("totalIncome", `Total Income - ${this.users.reduce((a,b)=>parseInt(a.income) + parseInt(b.income))}`))
     usersDiv.append(this.generateInnerUserDiv())
     usersDiv.append(createButton("addUser", "Add Income User", this.addUser, this))
-    usersDiv.append(addPopup())
+    usersDiv.append(this.createNewUserForm())
 
     return usersDiv
   }
@@ -123,7 +120,7 @@ class Budget {
     let innerUserDiv = createDiv("innerUserDiv")
 
     this.users.forEach (userInfo => {
-      innerUserDiv.append(new User(userInfo).generateUserCard())
+      innerUserDiv.append(new User(userInfo.name, userInfo.jobs).generateUserCard())
       innerUserDiv.style.gridTemplateColumns += " auto"
     })
 
@@ -131,15 +128,41 @@ class Budget {
   }
 
   addUser(event, budgetObj) {
-    console.log(event, budgetObj)
+    let newUserForm = document.getElementById("newUserForm")
+    if (newUserForm.classList.contains("hidden")) {
+      usersDiv.style.gridTemplateRows = "70px auto 30px auto"
+      newUserForm.classList.remove("hidden")
+    } else {
+      usersDiv.style.gridTemplateRows = "70px auto 30px"
+      newUserForm.classList.add("hidden")
+    }
+  }
+
+  createNewUserForm(){
+    let userFormContainer = createDiv("formContainer")
+    userFormContainer.id = "newUserForm"
+    userFormContainer.classList.add("hidden")
+
+    let nameInput = createInput("input-text","text","name","","Enter the new users name...")
+    let submitUser = createInput("submitNewUser", "submit", "submit", "Submit New User!")
+    
+    let userForm = createForm("addUserForm","Add a new user!", [nameInput,submitUser])
+    userFormContainer.append(userForm)
+    
+    userFormContainer.addEventListener('submit', newUserEvent => {
+      newUserEvent.preventDefault()
+      let newUserName = newUserEvent.target.name.value;
+      if (newUserName) {
+        new User(name)
+        // submitNewUserReq(newUserName)
+      }
+    })
+    return userFormContainer
   }
 
   generateDebtDiv(){
-    let debtDiv = createDiv("debtCard")
-
     debtDiv.append(this.generateInnerDebtDiv())
     debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))
-    debtDiv.append(addPopup())
 
     return debtDiv
   }
@@ -164,11 +187,8 @@ class Budget {
   }
 
   generateExpenseDiv(){
-    let expensesDiv = createDiv("expenseCard")
-    
     expensesDiv.append(this.generateInnerExpenseDiv())
     expensesDiv.append(createButton("addExpense", "Add Expense", this.addExpense, this))
-    expensesDiv.append(addPopup())
 
     return expensesDiv
   }
@@ -194,10 +214,17 @@ class Budget {
 }
 
 class User {
-  constructor (userInfo){
-    this.name = userInfo.name
-    this.income = userInfo.income
-    this.jobs = userInfo.jobs
+  constructor (firstName, jobs){
+    this.name = firstName
+    this.jobs = jobs
+  }
+
+  get income(){
+    let income = 0
+    this.jobs.forEach(job => {
+      income += parseInt(job.pay_amount * job.pay_frequency)
+    })
+    return income
   }
 
   generateUserCard() {
@@ -211,7 +238,6 @@ class User {
     })
     userDiv.append(jobList)
     userDiv.append(createButton("addIncome", "Add A Source Of Income", this.addJob, this))
-    userDiv.append(addPopup())
 
     return userDiv
   }
@@ -230,16 +256,7 @@ class Job {
   }
 
   generateJobItem() {
-    let income = 0
-
-    if (this.pay_frequency == "weekly") {
-      income += parseInt(this.pay_amount)*4.3
-    } else {
-      let frequency = this.pay_frequency.split(",").length
-      let amount = parseInt(this.pay_amount)
-      income = frequency*amount
-    }
-
+    let income = parseInt(this.pay_amount * this.pay_frequency)
     return createLi(`job${this.id}`, `${this.company} - ${income}`)
   }
 }
