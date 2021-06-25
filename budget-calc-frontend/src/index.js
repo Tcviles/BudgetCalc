@@ -8,22 +8,24 @@ const EXPENSE_URL = `${BASE_URL}/expenses`
 const mainBody = document.querySelector("main")
 const budgetCard = document.querySelector(".budgetCard")
 const budgetTitleDiv = document.querySelector(".budgetTitle")
+const incomeDiv = document.querySelector(".incomeCard")
 const usersDiv = document.querySelector(".usersCard")
 const debtDiv = document.querySelector(".debtCard")
 const expensesDiv = document.querySelector(".expenseCard")
 
-function createDiv(className){
+function createDiv(className, idName = ""){
   let div = document.createElement("div")
   div.classList.add(className)
+  div.id = idName
 
   return div
 }
 
-function createButton(className, buttonText, buttonEventFn, parentObj = ""){
+function createButton(className, buttonText, buttonEventFn){
   let button = document.createElement("button")
   button.classList.add(className)
   button.innerText = buttonText
-  button.onclick = clickEvent => buttonEventFn(clickEvent, parentObj)
+  button.onclick = clickEvent => buttonEventFn(clickEvent.target)
 
   return button
 }
@@ -68,13 +70,21 @@ function createForm(className, formHeadingText, inputs) {
   return form
 }
 
+function getId(element){
+  let id = ""
+  while (element.id == "") {
+    element = element.parentElement
+  }
+  return element.id
+}
+
 function generateBudgets() {
   mainBody.innerHTML = ""
 
   fetch(BUDGET_URL)
   .then(res=>res.json())
   .then(json=>json.forEach(budgetInfo=>{
-    new Budget(budgetInfo).generateBudgetCard()
+    new Budget(budgetInfo)
   }))
 }
 
@@ -85,55 +95,78 @@ class Budget {
     this.users = budgetInfo.users
     this.debts = budgetInfo.debts
     this.expenses = budgetInfo.expenses
+    this.generateBudgetCard()
   }
 
   generateBudgetCard(){  
-    budgetCard.append(this.generateBudgetTitle())
-    budgetCard.append(this.generateUserDiv())
-    budgetCard.append(this.generateDebtDiv())
-    budgetCard.append(this.generateExpenseDiv())
+    budgetCard.id = this.id
+    this.generateBudgetTitle()
+    budgetCard.append(this.generateIncomeCard())
+    budgetCard.append(this.generateDebtCard())
+    budgetCard.append(this.generateExpenseCard())
     
     mainBody.append(budgetCard)
   }
 
-  generateBudgetTitle(){    
+  generateBudgetTitle(){
     budgetTitleDiv.append(createParagraph("budgetTitle","What is this budgets priority?"))
     budgetTitleDiv.append(createButton("priority", this.priority, this.togglePriority, this))
 
-    return budgetTitleDiv
+    budgetCard.append(budgetTitleDiv)
   }
   
-  togglePriority(event, budgetObj) {
-    console.log(event, budgetObj)
+  togglePriority(event) {
+    let updateBudgetUrl = `${BUDGET_URL}/${getId(event)}`
+    if (event.innerText == "Interest") {
+      event.innerText = "Payoff"
+    } else {
+      event.innerText = "Interest"
+    }
+
+    let formData = {
+      "priority": event.innerText,
+    };
+  
+    let configObj = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(formData)
+    }
+  
+    return fetch(updateBudgetUrl,configObj)
+      .then(response => response.json())
+      .then(json => console.log(json))
+      .catch(error => alert("There was an error: "+error.message+"."));
   }
 
-  generateUserDiv() {
-    usersDiv.append(createParagraph("totalIncome", `Total Income - ${this.users.reduce((a,b)=>parseInt(a.income) + parseInt(b.income))}`))
-    usersDiv.append(this.generateInnerUserDiv())
-    usersDiv.append(createButton("addUser", "Add Income User", this.addUser, this))
-    usersDiv.append(this.createNewUserForm())
+  generateIncomeCard() {
+    incomeDiv.append(createParagraph("totalIncome", `Total Income - ${this.users.reduce((a,b)=>parseInt(a.income) + parseInt(b.income))}`))
+    incomeDiv.append(this.generateUsersCard())
+    incomeDiv.append(createButton("addUser", "Add Income User", this.toggleUserForm, this))
+    incomeDiv.append(this.createNewUserForm())
+
+    return incomeDiv
+  }
+
+  generateUsersCard() {
+    this.users.forEach (userInfo => {
+      new User(userInfo.id, userInfo.name, userInfo.jobs, this.id)
+    })
 
     return usersDiv
   }
 
-  generateInnerUserDiv() {
-    let innerUserDiv = createDiv("innerUserDiv")
-
-    this.users.forEach (userInfo => {
-      innerUserDiv.append(new User(userInfo.id, userInfo.name, userInfo.jobs, this.id).generateUserCard())
-      innerUserDiv.style.gridTemplateColumns += " auto"
-    })
-
-    return innerUserDiv
-  }
-
-  addUser(event, budgetObj) {
-    let newUserForm = document.getElementById("newUserForm")
+  toggleUserForm() {
+    const newUserForm = document.getElementById("newUserForm")
+    
     if (newUserForm.classList.contains("hidden")) {
-      usersDiv.style.gridTemplateRows = "70px auto 30px auto"
+      incomeDiv.style.gridTemplateRows = "70px auto 30px auto"
       newUserForm.classList.remove("hidden")
     } else {
-      usersDiv.style.gridTemplateRows = "70px auto 30px"
+      incomeDiv.style.gridTemplateRows = "70px auto 30px"
       newUserForm.classList.add("hidden")
     }
   }
@@ -153,13 +186,14 @@ class Budget {
       newUserEvent.preventDefault()
       let newUserName = newUserEvent.target.name.value;
       if (newUserName) {
-        new User("",newUserName,[],this.id).submitNewUser();
+        new User("",newUserName, [], this.id)
+        this.toggleUserForm()
       }
     })
     return userFormContainer
   }
 
-  generateDebtDiv(){
+  generateDebtCard(){
     debtDiv.append(this.generateInnerDebtDiv())
     debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))
 
@@ -185,7 +219,7 @@ class Budget {
     console.log(event.target)
   }
 
-  generateExpenseDiv(){
+  generateExpenseCard(){
     expensesDiv.append(this.generateInnerExpenseDiv())
     expensesDiv.append(createButton("addExpense", "Add Expense", this.addExpense, this))
 
@@ -218,6 +252,11 @@ class User {
     this.name = firstName
     this.jobs = jobs
     this.budgetId = budgetId
+    if (userId == "") {
+      return this.submitNewUserReq()
+    } else {
+      return this.generateUserCard()
+    }
   }
 
   get income(){
@@ -229,22 +268,24 @@ class User {
   }
 
   generateUserCard() {
-    let userDiv = createDiv("user")
+    let userCard = createDiv("userCard",this.id)
 
-    userDiv.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
-    userDiv.append(createButton("deleteUser", "remove", this.removeUser, this))
+    userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
+    userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq, this))
 
     let jobList = document.createElement("ul")
     this.jobs.forEach(jobInfo => {
       jobList.append(new Job(jobInfo).generateJobItem())
     })
-    userDiv.append(jobList)
-    userDiv.append(createButton("addIncome", "Add A Source Of Income", this.addJob, this))
+    userCard.append(jobList)
+    userCard.append(createButton("addIncome", "Add A Source Of Income", this.addJob, this))
 
-    return userDiv
+    usersDiv.style.gridTemplateColumns+=" auto"
+
+    usersDiv.append(userCard)
   }
 
-  submitNewUser(){
+  submitNewUserReq(){
     let formData = {
       "name": this.name,
       "jobs": this.jobs,
@@ -262,14 +303,14 @@ class User {
   
     return fetch(USER_URL,configObj)
       .then(response => response.json())
-      .then(json => console.log(json))
-      .catch(error => document.body.innerHTML = "<h1>"+error.message+"</h1>");
+      .then(json => {
+        new User(json.id, json.name, json.jobs, json.budgetId)
+      })
+      .catch(error => alert("There was an error: "+error.message+"."));
   }
 
-  removeUser(event, user){
-    console.log(user)
-    let deleteUserUrl = `${USER_URL}/${user.id}`
-    console.log(deleteUserUrl)
+  removeUserReq(button){
+    let deleteUserUrl = `${USER_URL}/${getId(button)}`
 
     let configInfo = {
       method: "DELETE",
@@ -286,7 +327,15 @@ class User {
         if (json.error) {
           console.log(json)
         } else {
-          console.log(json)
+          let cards = document.querySelectorAll("div.userCard")
+          usersDiv.style.gridTemplateColumns = ""
+          cards.forEach(card => {
+            if (card.id == json.id) {
+              card.remove()
+            } else {
+              usersDiv.style.gridTemplateColumns+=" auto"
+            }
+          })
         }
       })
       .catch(error => console.log(error.message));

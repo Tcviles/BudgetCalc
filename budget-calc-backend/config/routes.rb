@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   get '/budgets' => 'budgets#index'
   get '/budgets/:id' => 'budgets#show'
+  patch '/budgets/:id' => 'budgets#update'
 
   get '/users' => 'users#index'
   get '/users/:id' => 'users#show'

@@ -3,6 +3,11 @@ body {
   padding: 0;
 }
 
+* {
+  border-radius: 10px;
+  height: auto;
+}
+
 header {
   background-image: url('images/budgetSiteBackground.png');
   background-size: cover;
@@ -26,24 +31,19 @@ main {
   grid-template-rows: auto;
   grid-gap: 20px;
   padding: 10px 0px 30px 5px;
-  height: 75%;
 }
 
 div {
   background-color: white;
-  width: 95%;
   padding: 10px 10px 20px 10px;
   margin: 5px;
-  border-radius: 10px;
-  position: relative;
 }
 
 div.budgetCard {
   display: grid;
-  grid-template-rows: 120px auto auto;
+  grid-template-rows: 80px auto auto;
   grid-gap: 30px;
   background-color: #eeeeee;
-  height: auto;
   box-shadow: 10px 10px grey;
 }
 
@@ -57,68 +57,61 @@ div.budgetTitle {
 
 /* User Section */
 
-div.usersCard {
+div.incomeCard {
   display: grid;
-  grid-template-rows: 70px auto 30px;
-  height: auto;
+  grid-template-rows: 70px 500px 30px;
+  min-height: 500px;
   width: 96%;
   background-color: grey;
   box-shadow: 10px 10px black;
 }
 
-div.usersCard .innerUserDiv{
+div.incomeCard .usersCard{
   display: grid;
   background-color: black;
-  border: black solid 1px;
   padding: 10px 10px 30px 10px;
-  height: auto;
-  width: auto;
 }
 
-div.user {
+div.userCard {
   background-color: #888888;
+  border: black solid 1px;
   width: 90%;
-  height: 90%;
 }
 
 div.debtCard {
   display: grid;
   grid-template-rows: auto 30px;
-  height: auto;
   width: 96%;
   background-color: grey;
   box-shadow: 10px 10px black;
 }
 
-div.debtCard .innerDebtDiv{
+div.debtCard .innerDebtCard{
   display: grid;
   background-color: #888888;
   border: black solid 1px;
   padding: 10px 10px 30px 10px;
-  height: auto;
   width: auto;
 }
 
 div.expenseCard {
   display: grid;
   grid-template-rows: auto 30px;
-  height: auto;
   width: 96%;
   background-color: grey;
   box-shadow: 10px 10px black;
 }
 
-div.expenseCard .innerExpenseDiv{
+div.expenseCard .innerExpenseCard{
   display: grid;
   background-color: #888888;
   border: black solid 1px;
   padding: 10px 10px 30px 10px;
-  height: auto;
   width: auto;
 }
 
 /* Modal Stuff */
-div.hidden {
+.hidden {
   display:none;
   height: 0;
 }
@@ -126,7 +119,6 @@ div.hidden {
 .container {
   padding: 1rem;
   width: stretch;
-  height: auto;
   display: none;
   background: #515DA2;
   opacity: .8;
@@ -181,7 +173,6 @@ button {
   font-size: 20px;
   color: #fff;
   background-color: green;
-  border-radius: 10px;
 }
 
 /* @media only screen and (min-width: 400px) {
