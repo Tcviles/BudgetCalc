@@ -10,6 +10,7 @@ const budgetCard = document.querySelector(".budgetCard")
 const budgetTitleDiv = document.querySelector(".budgetTitle")
 const incomeDiv = document.querySelector(".incomeCard")
 const usersDiv = document.querySelector(".usersCard")
+const spendingDiv = document.querySelector(".spendingCard")
 const debtDiv = document.querySelector(".debtCard")
 const expensesDiv = document.querySelector(".expenseCard")
 
@@ -78,53 +79,53 @@ function getId(element){
   return element.id
 }
 
-function generateBudgets() {
-  mainBody.innerHTML = ""
-
+function generatePage() {
   fetch(BUDGET_URL)
   .then(res=>res.json())
   .then(json=>json.forEach(budgetInfo=>{
     new Budget(budgetInfo)
+    new User(budgetInfo.users,"","",[],budgetInfo.id)
+    // new Debt(budgetInfo.id).generateSpendingCard(budgetInfo.debts, budgetInfo.expenses)
   }))
 }
 
 class Budget {
+  priorityButton = budgetTitleDiv.querySelector("button.priority")
+  
   constructor (budgetInfo) {
     this.id = budgetInfo.id
     this.priority = budgetInfo.priority
-    this.users = budgetInfo.users
-    this.debts = budgetInfo.debts
-    this.expenses = budgetInfo.expenses
     this.generateBudgetCard()
   }
 
   generateBudgetCard(){  
     budgetCard.id = this.id
     this.generateBudgetTitle()
-    budgetCard.append(this.generateIncomeCard())
-    budgetCard.append(this.generateDebtCard())
-    budgetCard.append(this.generateExpenseCard())
-    
-    mainBody.append(budgetCard)
+    // this.generateIncomeCard()
+    // this.generateDebtCard()
+    // this.generateExpenseCard()
   }
 
   generateBudgetTitle(){
-    budgetTitleDiv.append(createParagraph("budgetTitle","What is this budgets priority?"))
-    budgetTitleDiv.append(createButton("priority", this.priority, this.togglePriority, this))
-
-    budgetCard.append(budgetTitleDiv)
+    this.priorityButton.innerText = this.priority
+    this.priorityButton.onclick = () => this.togglePriority()
   }
   
-  togglePriority(event) {
-    let updateBudgetUrl = `${BUDGET_URL}/${getId(event)}`
-    if (event.innerText == "Interest") {
-      event.innerText = "Payoff"
+  togglePriority() {
+    if (this.priorityButton.innerText == "Interest") {
+      this.priorityButton.innerText = "Payoff"
     } else {
-      event.innerText = "Interest"
+      this.priorityButton.innerText = "Interest"
     }
+    
+    this.sendPriorityUpdate()
+  }
+
+  sendPriorityUpdate() {
+    let updateBudgetUrl = `${BUDGET_URL}/${this.id}`
 
     let formData = {
-      "priority": event.innerText,
+      "priority": this.priorityButton.innerText
     };
   
     let configObj = {
@@ -142,156 +143,90 @@ class Budget {
       .catch(error => alert("There was an error: "+error.message+"."));
   }
 
-  generateIncomeCard() {
-    incomeDiv.append(createParagraph("totalIncome", `Total Income - ${this.users.reduce((a,b)=>parseInt(a.income) + parseInt(b.income))}`))
-    incomeDiv.append(this.generateUsersCard())
-    incomeDiv.append(createButton("addUser", "Add Income User", this.toggleUserForm, this))
-    incomeDiv.append(this.createNewUserForm())
-
-    return incomeDiv
-  }
-
-  generateUsersCard() {
-    this.users.forEach (userInfo => {
-      new User(userInfo.id, userInfo.name, userInfo.jobs, this.id)
-    })
-
-    return usersDiv
-  }
-
-  toggleUserForm() {
-    const newUserForm = document.getElementById("newUserForm")
-    
-    if (newUserForm.classList.contains("hidden")) {
-      incomeDiv.style.gridTemplateRows = "70px auto 30px auto"
-      newUserForm.classList.remove("hidden")
-    } else {
-      incomeDiv.style.gridTemplateRows = "70px auto 30px"
-      newUserForm.classList.add("hidden")
-    }
-  }
-
-  createNewUserForm(){
-    let userFormContainer = createDiv("formContainer")
-    userFormContainer.id = "newUserForm"
-    userFormContainer.classList.add("hidden")
-
-    let nameInput = createInput("input-text","text","name","","Enter the new users name...")
-    let submitUser = createInput("submitNewUser", "submit", "submit", "Submit New User!")
-    
-    let userForm = createForm("addUserForm","Add a new user!", [nameInput,submitUser])
-    userFormContainer.append(userForm)
-    
-    userFormContainer.addEventListener('submit', newUserEvent => {
-      newUserEvent.preventDefault()
-      let newUserName = newUserEvent.target.name.value;
-      if (newUserName) {
-        new User("",newUserName, [], this.id)
-        this.toggleUserForm()
-      }
-    })
-    return userFormContainer
-  }
-
-  generateDebtCard(){
-    debtDiv.append(this.generateInnerDebtDiv())
-    debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))
-
-    return debtDiv
-  }
-
-  generateInnerDebtDiv() {
-    let innerDebtDiv = createDiv("innerDebtDiv")
-    innerDebtDiv.append(createParagraph("debts","Debts / Loan Payments with Balance"))
-
-    let debtList = document.createElement("ul")
-
-    this.debts.forEach (debtInfo => {
-      debtList.append(new Debt(debtInfo).generateDebtItem())
-    })
-
-    innerDebtDiv.append(debtList)
-
-    return innerDebtDiv
-  }
-
-  addDebt(event, budgetObj) {
-    console.log(event.target)
-  }
-
-  generateExpenseCard(){
-    expensesDiv.append(this.generateInnerExpenseDiv())
-    expensesDiv.append(createButton("addExpense", "Add Expense", this.addExpense, this))
-
-    return expensesDiv
-  }
-
-  generateInnerExpenseDiv() {
-    let innerExpenseDiv = createDiv("innerExpenseDiv")
-    innerExpenseDiv.append(createParagraph("expenses","Expenses / Subscription Payments"))
-
-    let expenseList = document.createElement("ul")
-
-    this.expenses.forEach (expenseInfo => {
-      expenseList.append(new Expense(expenseInfo).generateExpenseItem())
-    })
-
-    innerExpenseDiv.append(expenseList)
-
-    return innerExpenseDiv
-  }
-  
-  addExpense(event, budgetObj) {
-    console.log(event.target)
-  }
 }
 
 class User {
-  constructor (userId="", firstName, jobs = [], budgetId){
+  newUserForm = document.getElementById("newUserForm")
+  incomeCardContent = document.getElementById("incomeCardContent")
+  
+  constructor (userId = "", firstName="",  income=0, jobs = [], budgetId = ""){
     this.id = userId
     this.name = firstName
+    this.income = income
     this.jobs = jobs
     this.budgetId = budgetId
-    if (userId == "") {
-      return this.submitNewUserReq()
-    } else {
-      return this.generateUserCard()
-    }
+    
+    if (Array.isArray(userId)) return this.generateIncomeCard(userId)
+    if (userId != "") return this.generateUserCard()
+    if (firstName != "") return this.submitNewUserReq()
   }
-
-  get income(){
-    let income = 0
-    this.jobs.forEach(job => {
-      income += parseInt(job.pay_amount * job.pay_frequency)
+  
+  generateIncomeCard(listOfUsers) {
+    incomeDiv.querySelector("p").innerText = `Total Income - ${listOfUsers.reduce((a,b)=>{return a += b.income},0)}`
+    document.getElementById("incomeCardDropdown").addEventListener("click", () => this.toggleIncomeContent())
+    this.generateUsersCard(listOfUsers)
+    this.generateNewUserForm()
+  }
+  
+  generateNewUserForm(){
+    newUserForm.addEventListener('submit', newUserEvent => {
+      newUserEvent.preventDefault()
+      let newUserName = newUserEvent.target.name.value;
+      if (newUserName) {
+        new User("",newUserName,"",[],this.budgetId)
+        this.toggleUserForm()
+      }
     })
-    return income
+    incomeDiv.querySelector("button.addUser").onclick = this.toggleUserForm
   }
-
+  
+  generateUsersCard(users) {
+    users.forEach (userInfo => {
+      new User(userInfo.id, userInfo.name, userInfo.income, userInfo.jobs, userInfo.budget_id)
+    })
+  }
+  
   generateUserCard() {
     let userCard = createDiv("userCard",this.id)
-
+    
     userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
     userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq, this))
-
+    
     let jobList = document.createElement("ul")
     this.jobs.forEach(jobInfo => {
       jobList.append(new Job(jobInfo).generateJobItem())
     })
     userCard.append(jobList)
     userCard.append(createButton("addIncome", "Add A Source Of Income", this.addJob, this))
-
+    
     usersDiv.style.gridTemplateColumns+=" auto"
-
+    
     usersDiv.append(userCard)
   }
-
+  
+  toggleIncomeContent(){
+    if (incomeCardContent.classList.contains("hidden")) {
+      incomeCardContent.classList.remove("hidden")
+    } else {
+      incomeCardContent.classList.add("hidden")
+    }
+  }
+  
+  toggleUserForm() {
+    if (newUserForm.classList.contains("hidden")) {
+      newUserForm.classList.remove("hidden")
+    } else {
+      newUserForm.classList.add("hidden")
+    }
+  }
+  
   submitNewUserReq(){
     let formData = {
       "name": this.name,
       "jobs": this.jobs,
       "budgetId": this.budgetId
     };
-  
+    
     let configObj = {
       method: "POST",
       headers: {
@@ -300,18 +235,20 @@ class User {
       },
       body: JSON.stringify(formData)
     }
-  
+    
     return fetch(USER_URL,configObj)
-      .then(response => response.json())
-      .then(json => {
-        new User(json.id, json.name, json.jobs, json.budgetId)
-      })
-      .catch(error => alert("There was an error: "+error.message+"."));
+    .then(response => response.json())
+    .then(json => {
+      new User(json.id, json.name, json.income, json.jobs, json.budget_id)
+    })
+    .catch(error => alert("There was an error: "+error.message+"."));
   }
-
+  
   removeUserReq(button){
     let deleteUserUrl = `${USER_URL}/${getId(button)}`
-
+    const newUserForm = document.getElementById("newUserForm")
+    if (!newUserForm.classList.contains("hidden")) {newUserForm.classList.add("hidden")}
+    
     let configInfo = {
       method: "DELETE",
       headers: {
@@ -322,23 +259,23 @@ class User {
     }
     
     return fetch(deleteUserUrl, configInfo)
-      .then(resp => resp.json())
-      .then(json => {
-        if (json.error) {
-          console.log(json)
-        } else {
-          let cards = document.querySelectorAll("div.userCard")
-          usersDiv.style.gridTemplateColumns = ""
-          cards.forEach(card => {
-            if (card.id == json.id) {
-              card.remove()
-            } else {
-              usersDiv.style.gridTemplateColumns+=" auto"
-            }
-          })
-        }
-      })
-      .catch(error => console.log(error.message));
+    .then(resp => resp.json())
+    .then(json => {
+      if (json.error) {
+        console.log(json)
+      } else {
+        let cards = document.querySelectorAll("div.userCard")
+        usersDiv.style.gridTemplateColumns = ""
+        cards.forEach(card => {
+          if (card.id == json.id) {
+            card.remove()
+          } else {
+            usersDiv.style.gridTemplateColumns+=" auto"
+          }
+        })
+      }
+    })
+    .catch(error => console.log(error.message));
   }
   
   addJob(targetInfo, userObj){
@@ -353,33 +290,89 @@ class Job {
     this.pay_frequency = jobInfo.pay_frequency
     this.pay_amount = jobInfo.pay_amount
   }
-
+  
   generateJobItem() {
     let income = parseInt(this.pay_amount * this.pay_frequency)
     return createLi(`job${this.id}`, `${this.company} - ${income}`)
   }
 }
-class Debt {
-  constructor(debtInfo){
-    this.name = debtInfo.name
-    this.balance = debtInfo.balance
-    this.minimum_payment = debtInfo.minimum_payment
-    this.payment_date = debtInfo.payment_date
-  }
 
-  generateDebtItem() {
-    return createLi(`debt${this.id}`, `${this.name} - ${this.balance}`)
-  }
-}
 class Expense {
-  constructor(expenseInfo){
-    this.name = expenseInfo.name
-    this.minimum_payment = expenseInfo.minimum_payment
+  constructor(budgetId, name, minimum_payment, payment_date){
+    this.budgetId = budgetId
+    this.name = name
+    this.minimum_payment = minimum_payment 
+    this.payment_date = payment_date
   }
   
   generateExpenseItem() {
     return createLi(`debt${this.id}`, `${this.name} - ${this.minimum_payment}`)
   }
+
+  generateExpenseCard(){
+    expensesDiv.append(this.generateInnerExpenseDiv())
+    expensesDiv.append(createButton("addExpense", "Add Expense", this.addExpense, this))
+  
+    return expensesDiv
+  }
+  
+  generateInnerExpenseDiv() {
+    let innerExpenseDiv = createDiv("innerExpenseDiv")
+    innerExpenseDiv.append(createParagraph("expenses","Expenses / Subscription Payments"))
+  
+    let expenseList = document.createElement("ul")
+  
+    this.expenses.forEach (expenseInfo => {
+      expenseList.append(new Expense(expenseInfo).generateExpenseItem())
+    })
+  
+    innerExpenseDiv.append(expenseList)
+  
+    return innerExpenseDiv
+  }
+  
+  addExpense(event, budgetObj) {
+    console.log(event.target)
+  }
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{generateBudgets()})
+class Debt extends Expense {
+  constructor(budgetId, name, minimum_payment, payment_date, balance, interest_rate){
+    super(budgetId);
+    super(name);
+    super(minimum_payment);
+    super(payment_date);
+    this.balance = balance
+    this.interest_rate = interest_rate
+  }
+  
+  generateDebtItem() {
+    return createLi(`debt${this.id}`, `${this.name} - ${this.balance}`)
+  }
+
+  generateSpendingCard(){
+    let debt = new Debt(this.id)
+    let expense = new Expense(this.id)
+    spendingDiv.querySelector("p").innerText = `Total Spending - ${debt.getTotalMonthlyPayments() + expense.getTotalMonthlyPayments()}`
+  //   debt.generateDebtCard(this.debts)
+  //   expense.generateExpenseCard(this.expenses)
+  //   document.getElementById("spendingCardDropdown").addEventListener("click", () debt.toggleSpendingContent())
+  //   // spendingDiv.append(this.generateDebtDiv())
+  //   // debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))\
+  }
+  
+  generateDebtCard(debts) {
+    debtDiv.append(createParagraph("debts","Debts / Loan Payments with Balance"))
+  
+    debts.forEach (debtInfo => {
+      new Debt(debtInfo)
+    })
+  }
+  
+  addDebt(event, budgetObj) {
+    console.log(event.target)
+  }
+}
+  
+
+document.addEventListener('DOMContentLoaded', ()=>{generatePage()})

@@ -13,8 +13,8 @@ Expense.delete_all
 
 budget = Budget.create(priority: "Interest")
 
-husband = User.create(name: "Jerry", income: 4300, budget_id: budget.id)
-wife = User.create(name: "Jane", income: 200, budget_id: budget.id)
+husband = User.create(name: "Jerry", budget_id: budget.id)
+wife = User.create(name: "Jane", budget_id: budget.id)
 
 ontario = Job.create(company: "Ontario Systems", title: "Software Developer", pay_frequency: 2, pay_amount: 1900, user_id: husband.id)
 army = Job.create(company: "VA", title: "Disability", pay_frequency: 1, pay_amount:400, user_id: husband.id)

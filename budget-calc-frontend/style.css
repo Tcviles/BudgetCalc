@@ -26,50 +26,49 @@ header h2 {
 }
 
 main {
-  display: grid;
-  grid-template-columns: auto;
-  grid-template-rows: auto;
-  grid-gap: 20px;
   padding: 10px 0px 30px 5px;
 }
 
 div {
   background-color: white;
-  padding: 10px 10px 20px 10px;
   margin: 5px;
+}
+
+div.blackShadow {
+  width: 98%;
+  background-color: grey;
+  box-shadow: 10px 10px black;
+  margin-bottom: 20px;
 }
 
 div.budgetCard {
   display: grid;
-  grid-template-rows: 80px auto auto;
-  grid-gap: 30px;
+  grid-gap: 20px;
   background-color: #eeeeee;
   box-shadow: 10px 10px grey;
+  margin-right: 15px;
 }
 
 div.budgetTitle {
   display: grid;
-  grid-template-rows: auto;
-  grid-template-columns: auto auto;
-  height: 60px;
+  grid-template-columns: auto 400px;
+  height: fit-content;
+  padding: 10px;
   border: darkslategray solid 1px;
 }
 
 /* User Section */
 
-div.incomeCard {
+div.incomeCard, div.spendingCard {
   display: grid;
-  grid-template-rows: 70px 500px 30px;
-  min-height: 500px;
-  width: 96%;
-  background-color: grey;
-  box-shadow: 10px 10px black;
+  overflow: hidden;
 }
 
 div.incomeCard .usersCard{
-  display: grid;
+  display: flex;
   background-color: black;
   padding: 10px 10px 30px 10px;
+  overflow-x: scroll;
 }
 
 div.userCard {
@@ -81,9 +80,6 @@ div.userCard {
 div.debtCard {
   display: grid;
   grid-template-rows: auto 30px;
-  width: 96%;
-  background-color: grey;
-  box-shadow: 10px 10px black;
 }
 
 div.debtCard .innerDebtCard{
@@ -97,9 +93,6 @@ div.debtCard .innerDebtCard{
 div.expenseCard {
   display: grid;
   grid-template-rows: auto 30px;
-  width: 96%;
-  background-color: grey;
-  box-shadow: 10px 10px black;
 }
 
 div.expenseCard .innerExpenseCard{

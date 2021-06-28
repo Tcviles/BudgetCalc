@@ -7,18 +7,22 @@ class BudgetSerializer
     information = {
       include: {
         users: {
-          only: [:id, :name],
+          only: [:id, :name, :income],
           include: {
             jobs: {
               # only: [:company, :pay_frequency, :pay_amount]
+              except: [:created_at, :updated_at]
             }
-          }
+          },
+          except: [:created_at, :updated_at]
         }, 
         debts: {
           # only: [:name, :balance, :minimum_payment]
+          except: [:created_at, :updated_at]
         },
         expenses: {
           # only: [:name, :minimum_payment]
+          except: [:created_at, :updated_at]
         }
       },
       except: [:created_at, :updated_at]
