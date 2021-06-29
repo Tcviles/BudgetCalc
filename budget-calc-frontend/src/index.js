@@ -4,12 +4,11 @@ const USER_URL = `${BASE_URL}/users`
 const JOB_URL = `${BASE_URL}/jobs`
 const DEBT_URL = `${BASE_URL}/debts`
 const EXPENSE_URL = `${BASE_URL}/expenses`
+const JSON_Headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  }
 
-const mainBody = document.querySelector("main")
-const budgetCard = document.querySelector(".budgetCard")
-const budgetTitleDiv = document.querySelector(".budgetTitle")
-const incomeDiv = document.querySelector(".incomeCard")
-const usersDiv = document.querySelector(".usersCard")
 const spendingDiv = document.querySelector(".spendingCard")
 const debtDiv = document.querySelector(".debtCard")
 const expensesDiv = document.querySelector(".expenseCard")
@@ -47,177 +46,80 @@ function createLi(id, liText) {
   return li
 }
 
-function createInput(className, type="text", inputName="", value= "", placeholder = "") {
-  let input = document.createElement("input")
-  input.classList.add(className)
-  input.type = type
-  input.name = inputName
-  input.value = value
-  input.placeholder = placeholder
-
-  return input
-}
-
-function createForm(className, formHeadingText, inputs) {
-  let form = document.createElement("form")
-  form.classList.add(className)
-
-  let formHeading = document.createElement("h3")
-  formHeading.innerText = formHeadingText
-  form.append(formHeading)
-
-  inputs.forEach(input => form.append(input))
-
-  return form
-}
-
-function getId(element){
-  let id = ""
-  while (element.id == "") {
-    element = element.parentElement
-  }
-  return element.id
-}
-
 function generatePage() {
   fetch(BUDGET_URL)
   .then(res=>res.json())
   .then(json=>json.forEach(budgetInfo=>{
-    new Budget(budgetInfo)
-    new User(budgetInfo.users,"","",[],budgetInfo.id)
+    new Budget(budgetInfo.id, budgetInfo.priority)
+    new User(budgetInfo.id).generateIncomeCard(budgetInfo.users)
     // new Debt(budgetInfo.id).generateSpendingCard(budgetInfo.debts, budgetInfo.expenses)
   }))
-}
-
-class Budget {
-  priorityButton = budgetTitleDiv.querySelector("button.priority")
-  
-  constructor (budgetInfo) {
-    this.id = budgetInfo.id
-    this.priority = budgetInfo.priority
-    this.generateBudgetCard()
-  }
-
-  generateBudgetCard(){  
-    budgetCard.id = this.id
-    this.generateBudgetTitle()
-    // this.generateIncomeCard()
-    // this.generateDebtCard()
-    // this.generateExpenseCard()
-  }
-
-  generateBudgetTitle(){
-    this.priorityButton.innerText = this.priority
-    this.priorityButton.onclick = () => this.togglePriority()
-  }
-  
-  togglePriority() {
-    if (this.priorityButton.innerText == "Interest") {
-      this.priorityButton.innerText = "Payoff"
-    } else {
-      this.priorityButton.innerText = "Interest"
-    }
-    
-    this.sendPriorityUpdate()
-  }
-
-  sendPriorityUpdate() {
-    let updateBudgetUrl = `${BUDGET_URL}/${this.id}`
-
-    let formData = {
-      "priority": this.priorityButton.innerText
-    };
-  
-    let configObj = {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(formData)
-    }
-  
-    return fetch(updateBudgetUrl,configObj)
-      .then(response => response.json())
-      .then(json => console.log(json))
-      .catch(error => alert("There was an error: "+error.message+"."));
-  }
-
 }
 
 class User {
   newUserForm = document.getElementById("newUserForm")
   incomeCardContent = document.getElementById("incomeCardContent")
   
-  constructor (userId = "", firstName="",  income=0, jobs = [], budgetId = ""){
-    this.id = userId
+  constructor (budgetId = "", firstName="",  income=0, jobs = [], userId = ""){
+    this.budgetId = budgetId
     this.name = firstName
     this.income = income
     this.jobs = jobs
-    this.budgetId = budgetId
+    this.id = userId
     
-    if (Array.isArray(userId)) return this.generateIncomeCard(userId)
-    if (userId != "") return this.generateUserCard()
+    if (userId != "") return this.addUserCard()
     if (firstName != "") return this.submitNewUserReq()
   }
   
   generateIncomeCard(listOfUsers) {
-    incomeDiv.querySelector("p").innerText = `Total Income - ${listOfUsers.reduce((a,b)=>{return a += b.income},0)}`
-    document.getElementById("incomeCardDropdown").addEventListener("click", () => this.toggleIncomeContent())
-    this.generateUsersCard(listOfUsers)
-    this.generateNewUserForm()
+    document.querySelector(".incomeCard p").innerText = `Total Income - ${this.calculateTotalIncome(listOfUsers)}`
+    document.getElementById("incomeCardDropdown").onclick = this.toggleIncomeContent
+    this.renderUsers(listOfUsers)
+    this.renderNewUserForm()
+  }
+
+  calculateTotalIncome(listOfUsers){
+    return listOfUsers.reduce((a,b)=>{return a += b.income},0)
   }
   
-  generateNewUserForm(){
+  toggleIncomeContent(){
+    if (incomeCardContent.classList.contains("hidden")) return incomeCardContent.classList.remove("hidden")
+    if (!incomeCardContent.classList.contains("hidden")) return incomeCardContent.classList.add("hidden")
+  }
+  
+  renderUsers(users) {
+    users.forEach (user => {
+      new User(user.budget_id, user.name, user.income, user.jobs, user.id)
+    })
+  }
+
+  addUserCard() {
+    let userCard = createDiv("userCard",this.id)
+    
+    userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
+    userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq))
+    userCard.append(document.createElement("ul"))
+    document.querySelector(".usersCard").append(userCard)
+
+    new Job(this.id).renderJobs(this.jobs)
+  }
+    
+  renderNewUserForm(){
     newUserForm.addEventListener('submit', newUserEvent => {
       newUserEvent.preventDefault()
       let newUserName = newUserEvent.target.name.value;
       if (newUserName) {
-        new User("",newUserName,"",[],this.budgetId)
+        new User(this.budgetId,newUserName)
         this.toggleUserForm()
       }
     })
-    incomeDiv.querySelector("button.addUser").onclick = this.toggleUserForm
+    document.querySelector("button.addUser").onclick = this.toggleUserForm
   }
-  
-  generateUsersCard(users) {
-    users.forEach (userInfo => {
-      new User(userInfo.id, userInfo.name, userInfo.income, userInfo.jobs, userInfo.budget_id)
-    })
-  }
-  
-  generateUserCard() {
-    let userCard = createDiv("userCard",this.id)
     
-    userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
-    userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq, this))
-    
-    let jobList = document.createElement("ul")
-    this.jobs.forEach(jobInfo => {
-      jobList.append(new Job(jobInfo).generateJobItem())
-    })
-    userCard.append(jobList)
-    userCard.append(createButton("addIncome", "Add A Source Of Income", this.addJob, this))
-    
-    usersDiv.style.gridTemplateColumns+=" auto"
-    
-    usersDiv.append(userCard)
-  }
-  
-  toggleIncomeContent(){
-    if (incomeCardContent.classList.contains("hidden")) {
-      incomeCardContent.classList.remove("hidden")
-    } else {
-      incomeCardContent.classList.add("hidden")
-    }
-  }
-  
   toggleUserForm() {
-    if (newUserForm.classList.contains("hidden")) {
-      newUserForm.classList.remove("hidden")
-    } else {
-      newUserForm.classList.add("hidden")
-    }
+    document.querySelector("#newUserForm .input-text").value = ""
+    if (newUserForm.classList.contains("hidden")) return newUserForm.classList.remove("hidden")
+    if (!newUserForm.classList.contains("hidden")) return newUserForm.classList.add("hidden")
   }
   
   submitNewUserReq(){
@@ -227,73 +129,77 @@ class User {
       "budgetId": this.budgetId
     };
     
-    let configObj = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(formData)
-    }
+    let configObj = { method: "POST", headers: JSON_Headers, body: JSON.stringify(formData)} 
     
     return fetch(USER_URL,configObj)
     .then(response => response.json())
     .then(json => {
-      new User(json.id, json.name, json.income, json.jobs, json.budget_id)
+      new User(json.budget_id, json.name, json.income, json.jobs, json.id)
     })
     .catch(error => alert("There was an error: "+error.message+"."));
   }
   
   removeUserReq(button){
-    let deleteUserUrl = `${USER_URL}/${getId(button)}`
-    const newUserForm = document.getElementById("newUserForm")
     if (!newUserForm.classList.contains("hidden")) {newUserForm.classList.add("hidden")}
     
-    let configInfo = {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: ""
-    }
+    let deleteUserUrl = `${USER_URL}/${button.parentElement.id}`
     
-    return fetch(deleteUserUrl, configInfo)
+    let configObj = { method: "DELETE", headers: JSON_Headers}
+    
+    return fetch(deleteUserUrl, configObj)
     .then(resp => resp.json())
     .then(json => {
       if (json.error) {
         console.log(json)
       } else {
         let cards = document.querySelectorAll("div.userCard")
-        usersDiv.style.gridTemplateColumns = ""
         cards.forEach(card => {
-          if (card.id == json.id) {
-            card.remove()
-          } else {
-            usersDiv.style.gridTemplateColumns+=" auto"
-          }
+          if (card.id == json.id) return card.remove()
         })
       }
     })
     .catch(error => console.log(error.message));
   }
-  
-  addJob(targetInfo, userObj){
-    console.log(targetInfo, userObj)
-  }
 }
 
 class Job {
-  constructor(jobInfo){
-    this.id = jobInfo.id
-    this.company = jobInfo.company
-    this.pay_frequency = jobInfo.pay_frequency
-    this.pay_amount = jobInfo.pay_amount
+  constructor(userId = "", company = "", title = "", pay_amount = 0, pay_frequency = 0, jobId = ""){
+    this.userId = userId
+    this.company = company
+    this.title = title
+    this.pay_frequency = pay_frequency
+    this.pay_amount = pay_amount
+    this.id = jobId
+    
+    if (jobId != "") return this.appendJobItem()
+    if (company != "") return this.submitNewJobReq()
   }
   
-  generateJobItem() {
+  renderJobs(jobs) {
+    jobs.forEach (job => {
+      new Job(job.user_id, job.company, job.title, job.pay_amount, job.pay_frequency, job.id)
+    })
+  }
+
+  getUserCardJobList(){
+    let collection = document.querySelectorAll(".userCard")
+    let userCard = ""
+    collection.forEach(object => {
+      if (object.id == this.userId) {
+        userCard = object
+      }
+    })
+    return userCard.querySelector("ul")
+  }
+  
+  appendJobItem() {
+    let list = this.getUserCardJobList()
     let income = parseInt(this.pay_amount * this.pay_frequency)
-    return createLi(`job${this.id}`, `${this.company} - ${income}`)
+    list.append(createLi(`job${this.id}`, `${this.company} - ${income}`))
+  }
+
+  submitNewJobReq() {
+    console.log(this)
   }
 }
 
@@ -372,6 +278,39 @@ class Debt extends Expense {
   addDebt(event, budgetObj) {
     console.log(event.target)
   }
+}
+
+class Budget {
+  priorityButton = document.querySelector("button.priority")
+  
+  constructor (id, priority) {
+    this.id = id
+    this.priority = priority
+    this.setUpPriorityButton()
+  }
+
+  setUpPriorityButton(){
+    this.priorityButton.innerText = this.priority
+    this.priorityButton.onclick = () => this.sendPriorityUpdate()
+  }
+
+  togglePriorityText() {
+    if (this.priorityButton.innerText == "Interest") return "Payoff"
+    if (this.priorityButton.innerText != "Interest") return "Interest"
+  }
+  
+  sendPriorityUpdate() {
+    let updateBudgetUrl = `${BUDGET_URL}/${this.id}`
+    
+    let formData = { "priority": this.togglePriorityText() };
+    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
+  
+    return fetch(updateBudgetUrl,configObj)
+      .then(response => response.json())
+      .then(json => this.priorityButton.innerText = json.priority)
+      .catch(error => alert("There was an error: "+error.message+"."));
+  }
+
 }
   
 

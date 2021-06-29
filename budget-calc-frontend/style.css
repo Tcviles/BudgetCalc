@@ -121,7 +121,7 @@ div.expenseCard .innerExpenseCard{
   width: 80%
 }
 
-.submitNewUser {
+.submit {
   position: relative;
   background-color: #e04b52;
   border-radius: 5px;
@@ -134,7 +134,7 @@ div.expenseCard .innerExpenseCard{
   margin: 3px;
 }
 
-.submitNewUser:hover {
+.submit:hover {
   background-color: whitesmoke;
   border: #e04b52 solid 1px;
   color: #e04b52;
