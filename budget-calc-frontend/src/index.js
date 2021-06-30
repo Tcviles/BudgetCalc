@@ -52,7 +52,7 @@ function generatePage() {
   .then(json=>json.forEach(budgetInfo=>{
     new Budget(budgetInfo.id, budgetInfo.priority)
     new User(budgetInfo.id).generateIncomeCard(budgetInfo.users)
-    new Debt(budgetInfo.id).generateSpendingCard(budgetInfo.debts, budgetInfo.expenses)
+    new Expense(budgetInfo.id).generateSpendingCard(budgetInfo.expenses, budgetInfo.debts)
   }))
 }
 
@@ -252,7 +252,6 @@ class Job {
       "userId": this.userId
     };
     
-    console.log(formData)
     let configObj = { method: "POST", headers: JSON_Headers, body: JSON.stringify(formData)} 
     
     return fetch(JOB_URL,configObj)
@@ -287,89 +286,48 @@ class Expense {
   newExpenseForm = document.getElementById("newExpenseForm")
   spendingCardContent = document.getElementById("spendingCardContent")
   spendingDropdown = document.getElementById("spendingCardDropdown")
-  constructor(budgetId, name, minimum_payment, payment_date){
+  constructor(budgetId, name, minimumPayment, paymentDate, expenseId){
     this.budgetId = budgetId
     this.name = name
-    this.minimum_payment = minimum_payment 
-    this.payment_date = payment_date
-  }
-  
-  generateExpenseItem() {
-    return createLi(`debt${this.id}`, `${this.name} - ${this.minimum_payment}`)
-  }
+    this.minimumPayment = minimumPayment 
+    this.paymentDate = paymentDate
+    this.expenseId = expenseId
 
-  generateExpenseCard(){
-    expensesDiv.append(this.generateInnerExpenseDiv())
-    expensesDiv.append(createButton("addExpense", "Add Expense", this.addExpense, this))
-  
-    return expensesDiv
+    // if (expenseId != "") return this.addExpenseCard()
+    // if (name != "") return this.submitNewExpenseReq()
   }
   
-  generateInnerExpenseDiv() {
-    let innerExpenseDiv = createDiv("innerExpenseDiv")
-    innerExpenseDiv.append(createParagraph("expenses","Expenses / Subscription Payments"))
-  
-    let expenseList = document.createElement("ul")
-  
-    this.expenses.forEach (expenseInfo => {
-      expenseList.append(new Expense(expenseInfo).generateExpenseItem())
-    })
-  
-    innerExpenseDiv.append(expenseList)
-  
-    return innerExpenseDiv
-  }
-
-  calculateTotalMonthlySpending(listOfExpenses){
-    return listOfExpenses.reduce((a,b)=>{return a += parseInt(b.minimum_payment)},0)
-  }
-  
-  addExpense(event, budgetObj) {
-    console.log(event.target)
-  }
-}
-
-class Debt extends Expense {
-  constructor(budgetId, name, minimum_payment, payment_date, balance, interest_rate){
-    super(budgetId, name, minimum_payment, payment_date);
-    this.balance = balance;
-    this.interest_rate = interest_rate;
-  }
-  
-  generateDebtItem() {
-    return createLi(`debt${this.id}`, `${this.name} - ${this.balance}`)
-  }
-
-  generateSpendingCard(debts, expenses){
-    let totalMonthlyDebtPayments = this.calculateTotalMonthlySpending(debts)
-    let totalMonthlyExpensePayments = this.calculateTotalMonthlySpending(expenses)
-    this.spendingDropdown.innerHTML = `<p>Total Monthly Payments - ${totalMonthlyDebtPayments + totalMonthlyExpensePayments}</p>`
+  generateSpendingCard(expenses, debts){
+    expenses.push.apply(expenses, debts)
+    let totalMonthlyPayments = this.calculateTotalMonthlySpending(expenses)
+    this.spendingDropdown.innerHTML = `<p>Total Monthly Payments - ${totalMonthlyPayments}</p>`
     this.spendingDropdown.onclick = this.toggleSpendingContent
-    let debt = new Debt(this.id)
-    let expense = new Expense(this.id)
+    this.renderExpenseCards(expenses)
+    
   //   debt.generateDebtCard(this.debts)
   //   expense.generateExpenseCard(this.expenses)
-  //   document.getElementById("spendingCardDropdown").addEventListener("click", () debt.toggleSpendingContent())
-  //   // spendingDiv.append(this.generateDebtDiv())
-  //   // debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))\
+  //   spendingDiv.append(this.generateDebtDiv())
+  //   debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))\
   }
   
   toggleSpendingContent(){
     if (spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.remove("hidden")
     if (!spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.add("hidden")
   }
-  
-  generateDebtCard(debts) {
-    debtDiv.append(createParagraph("debts","Debts / Loan Payments with Balance"))
-  
-    debts.forEach (debtInfo => {
-      new Debt(debtInfo)
-    })
+
+  calculateTotalMonthlySpending(listOfExpenses){
+    return listOfExpenses.reduce((a,b)=>{return a += parseInt(b.minimum_payment)},0)
   }
-  
-  addDebt(event, budgetObj) {
-    console.log(event.target)
+}
+
+class Debt extends Expense {
+  constructor(budgetId, name, minimumPayment, paymentDate, balance, interest_rate){
+    super(budgetId, name, minimumPayment, paymentDate);
+    this.balance = balance;
+    this.interest_rate = interest_rate;
   }
+
+  
 }
 
 class Budget {

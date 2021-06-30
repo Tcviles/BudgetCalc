@@ -50,22 +50,20 @@
       </div>
       <div class="spendingCard blackShadow">
         <div class="dropdown" id="spendingCardDropdown">
-          <p id="totalSpending">Total spending</p>
+          <p id="totalSpending"></p>
         </div>
         <div class="content hidden" id="spendingCardContent">
           <div class="monthlyBillsCard">
-            <div class="debtCard"></div>
-            <div class="expenseCard"></div>
           </div>
           <button class="addMonthlyBill">Add A Monthly Bill</button>
-          <div class="formContainer" id="newExpenseForm">
+          <div class="formContainer hidden" id="newExpenseForm">
             <form class = "addMonthlyBillForm">
               <h3>Add a New Monthly Bill!</h3>
               <input class="input-text" type="text" name="name" placeholder="Bill Name" required>
               <input class="input-text" type="number" step=0.01 name="minimumPayment" placeholder="Minimum Monthly Payment" required>
               <input class="input-text" type="number" name="paymenDate" placeholder="What day of the month is this due?" required>
               <input class="input-text" type="number" step=0.01 name="balance" placeholder="(Optional) - Remaining Balance">
-              <input class="input-text" type="number" step=0.01 name="interestRate" placeholder="(Optional) - Interest Rate">
+              <input class="input-text" type="number" step=0.01 name="interestRate" placeholder="(Optional) - Interest Rate" >
               <input class="submit" type="submit" name="submit" placeholder="Submit New Bill!">
             </form>
           </div>
