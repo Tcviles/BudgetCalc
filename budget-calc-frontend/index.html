@@ -24,7 +24,6 @@
       <div class="incomeCard blackShadow">
         <div class="dropdown" id="incomeCardDropdown">
           <p id="totalIncome"></p>
-          <p id="arrow"></p>
         </div>
         <div class="content hidden" id="incomeCardContent">
           <div class="usersCard"></div>
@@ -32,7 +31,7 @@
           <div class="formContainer hidden" id="newUserForm">
             <form class = "addUserForm">
               <h3>Add a New User!</h3>
-              <input class="input-text" type="text" name="name" placeholder="Full Name">
+              <input class="input-text" type="text" name="name" placeholder="First Name" required>
               <input class="submit" type="submit" name="submit" placeholder="Submit New User!">
             </form>
           </div>
@@ -40,10 +39,10 @@
             <form class = "addIncomeForm">
               <h3>Add Income to </h3>
               <p class="helpText">For weekly paychecks, put 4.3. For Biweekly, put 2.16</p>
-              <input class="input-text" type="text" name="company" placeholder="Company Name">
-              <input class="input-text" type="text" name="title" placeholder="Title">
-              <input class="input-text" type="number" step=0.01 name="payFrequency" placeholder="How many times per month do you get paid?">
-              <input class="input-text" type="number" name="payAmount" placeholder="Estimated take home pay">
+              <input class="input-text" type="text" name="company" placeholder="Company Name" required>
+              <input class="input-text" type="text" name="title" placeholder="Title" required>
+              <input class="input-text" type="number" step=0.01 name="payFrequency" placeholder="How many times per month do you get paid?" required>
+              <input class="input-text" type="number" name="payAmount" placeholder="Estimated take home pay" required>
               <input class="submit" type="submit" name="submit" placeholder="Submit New Income!">
             </form>
           </div>
@@ -52,19 +51,22 @@
       <div class="spendingCard blackShadow">
         <div class="dropdown" id="spendingCardDropdown">
           <p id="totalSpending">Total spending</p>
-          <p id="arrow"></p>
         </div>
-        <div class="content" id="spendingCardContent">
+        <div class="content hidden" id="spendingCardContent">
           <div class="monthlyBillsCard">
             <div class="debtCard"></div>
             <div class="expenseCard"></div>
           </div>
           <button class="addMonthlyBill">Add A Monthly Bill</button>
-          <div class="formContainer hidden" id="newMonthlyBillForm">
+          <div class="formContainer" id="newExpenseForm">
             <form class = "addMonthlyBillForm">
               <h3>Add a New Monthly Bill!</h3>
-              <input class="input-text" type="text" name="name" placeholder="Full Name">
-              <input class="submitNewMonthlyBill" type="submit" name="submit" placeholder="Submit New Bill!">
+              <input class="input-text" type="text" name="name" placeholder="Bill Name" required>
+              <input class="input-text" type="number" step=0.01 name="minimumPayment" placeholder="Minimum Monthly Payment" required>
+              <input class="input-text" type="number" name="paymenDate" placeholder="What day of the month is this due?" required>
+              <input class="input-text" type="number" step=0.01 name="balance" placeholder="(Optional) - Remaining Balance">
+              <input class="input-text" type="number" step=0.01 name="interestRate" placeholder="(Optional) - Interest Rate">
+              <input class="submit" type="submit" name="submit" placeholder="Submit New Bill!">
             </form>
           </div>
         </div>

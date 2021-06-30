@@ -52,7 +52,7 @@ function generatePage() {
   .then(json=>json.forEach(budgetInfo=>{
     new Budget(budgetInfo.id, budgetInfo.priority)
     new User(budgetInfo.id).generateIncomeCard(budgetInfo.users)
-    // new Debt(budgetInfo.id).generateSpendingCard(budgetInfo.debts, budgetInfo.expenses)
+    new Debt(budgetInfo.id).generateSpendingCard(budgetInfo.debts, budgetInfo.expenses)
   }))
 }
 
@@ -100,13 +100,15 @@ class User {
     userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
     userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq))
     userCard.append(document.createElement("ul"))
+
     let incomeButton = document.createElement("button")
     incomeButton.classList.add("addIncome")
     incomeButton.innerText = "Add Income"
     userCard.append(incomeButton)
+
     document.querySelector(".usersCard").append(userCard)
 
-    new Job(this.id).renderJobList(this.jobs)
+    new Job(this.id).renderJobList(this.jobs, this.name)
   }
     
   renderNewUserForm(){
@@ -123,6 +125,8 @@ class User {
     
   toggleUserForm() {
     document.querySelector("#newUserForm .input-text").value = ""
+    
+    if (!newIncomeForm.classList.contains("hidden")) {newIncomeForm.classList.add("hidden")}
     if (newUserForm.classList.contains("hidden")) return newUserForm.classList.remove("hidden")
     if (!newUserForm.classList.contains("hidden")) return newUserForm.classList.add("hidden")
   }
@@ -181,13 +185,13 @@ class Job {
     if (company != "") return this.submitNewJobReq()
   }
   
-  renderJobList(jobs) {
+  renderJobList(jobs, userName) {
     jobs.forEach (job => {
       new Job(job.user_id, job.company, job.title, job.pay_amount, job.pay_frequency, job.id)
     })
 
     this.getUserCard().querySelector("button.addIncome").addEventListener("click", () => {
-      this.setIncomeFormUserId(this.userId);
+      this.setIncomeFormUserId(this.userId, userName);
       this.toggleIncomeForm();
     })
   }
@@ -229,12 +233,14 @@ class Job {
   }
     
   toggleIncomeForm() {
+    if (!newUserForm.classList.contains("hidden")) {newUserForm.classList.add("hidden")}
     if (newIncomeForm.classList.contains("hidden")) return newIncomeForm.classList.remove("hidden")
     if (!newIncomeForm.classList.contains("hidden")) return newIncomeForm.classList.add("hidden")
   }
 
-  setIncomeFormUserId(userId){
+  setIncomeFormUserId(userId, userName){
     document.querySelector(".addIncomeForm").setAttribute("userId",userId)
+    document.querySelector(".addIncomeForm h3").innerText = `Add Income for ${userName}`
   }
 
   submitNewJobReq() {
@@ -270,7 +276,6 @@ class Job {
       if (json.error) {
         console.log(json)
       } else {
-        console.log(json)
         button.parentElement.remove()
       }
     })
@@ -279,6 +284,9 @@ class Job {
 }
 
 class Expense {
+  newExpenseForm = document.getElementById("newExpenseForm")
+  spendingCardContent = document.getElementById("spendingCardContent")
+  spendingDropdown = document.getElementById("spendingCardDropdown")
   constructor(budgetId, name, minimum_payment, payment_date){
     this.budgetId = budgetId
     this.name = name
@@ -311,6 +319,10 @@ class Expense {
   
     return innerExpenseDiv
   }
+
+  calculateTotalMonthlySpending(listOfExpenses){
+    return listOfExpenses.reduce((a,b)=>{return a += parseInt(b.minimum_payment)},0)
+  }
   
   addExpense(event, budgetObj) {
     console.log(event.target)
@@ -319,27 +331,32 @@ class Expense {
 
 class Debt extends Expense {
   constructor(budgetId, name, minimum_payment, payment_date, balance, interest_rate){
-    super(budgetId);
-    super(name);
-    super(minimum_payment);
-    super(payment_date);
-    this.balance = balance
-    this.interest_rate = interest_rate
+    super(budgetId, name, minimum_payment, payment_date);
+    this.balance = balance;
+    this.interest_rate = interest_rate;
   }
   
   generateDebtItem() {
     return createLi(`debt${this.id}`, `${this.name} - ${this.balance}`)
   }
 
-  generateSpendingCard(){
+  generateSpendingCard(debts, expenses){
+    let totalMonthlyDebtPayments = this.calculateTotalMonthlySpending(debts)
+    let totalMonthlyExpensePayments = this.calculateTotalMonthlySpending(expenses)
+    this.spendingDropdown.innerHTML = `<p>Total Monthly Payments - ${totalMonthlyDebtPayments + totalMonthlyExpensePayments}</p>`
+    this.spendingDropdown.onclick = this.toggleSpendingContent
     let debt = new Debt(this.id)
     let expense = new Expense(this.id)
-    spendingDiv.querySelector("p").innerText = `Total Spending - ${debt.getTotalMonthlyPayments() + expense.getTotalMonthlyPayments()}`
   //   debt.generateDebtCard(this.debts)
   //   expense.generateExpenseCard(this.expenses)
   //   document.getElementById("spendingCardDropdown").addEventListener("click", () debt.toggleSpendingContent())
   //   // spendingDiv.append(this.generateDebtDiv())
   //   // debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))\
+  }
+  
+  toggleSpendingContent(){
+    if (spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.remove("hidden")
+    if (!spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.add("hidden")
   }
   
   generateDebtCard(debts) {

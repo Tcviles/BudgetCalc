@@ -13,6 +13,7 @@ class UsersController < ApplicationController
 
   def delete
     user = User.find_by(id: params[:id])
+    user.jobs.each {|job| job.destroy}
     user.destroy
 
     render json: UserSerializer.new(user).to_serialized_json
