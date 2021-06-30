@@ -30,7 +30,7 @@ main {
 }
 
 div {
-  background-color: white;
+  border: black solid 5px;
   margin: 5px;
 }
 
@@ -156,6 +156,12 @@ p {
   font-family: Helvetica;
 }
 
+p.helpText {
+  font-size: 15px;
+  color: black;
+  font-family: Helvetica;
+}
+
 li {
   font-size: 1.05em;
   list-style: none;
@@ -166,6 +172,12 @@ button {
   font-size: 20px;
   color: #fff;
   background-color: green;
+}
+
+button.remove {
+  font-size: 12px;
+  background-color: red;
+  margin: 2px 2px 5px 2px;
 }
 
 /* @media only screen and (min-width: 400px) {

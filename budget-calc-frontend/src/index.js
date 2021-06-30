@@ -21,7 +21,7 @@ function createDiv(className, idName = ""){
   return div
 }
 
-function createButton(className, buttonText, buttonEventFn){
+function createButton(className, buttonText, buttonEventFn=""){
   let button = document.createElement("button")
   button.classList.add(className)
   button.innerText = buttonText
@@ -76,6 +76,7 @@ class User {
     document.getElementById("incomeCardDropdown").onclick = this.toggleIncomeContent
     this.renderUsers(listOfUsers)
     this.renderNewUserForm()
+    new Job().renderNewIncomeForm()
   }
 
   calculateTotalIncome(listOfUsers){
@@ -99,9 +100,13 @@ class User {
     userCard.append(createParagraph("userName",`${this.name} - Income ${this.income}`))
     userCard.append(createButton("deleteUser", "Remove User", this.removeUserReq))
     userCard.append(document.createElement("ul"))
+    let incomeButton = document.createElement("button")
+    incomeButton.classList.add("addIncome")
+    incomeButton.innerText = "Add Income"
+    userCard.append(incomeButton)
     document.querySelector(".usersCard").append(userCard)
 
-    new Job(this.id).renderJobs(this.jobs)
+    new Job(this.id).renderJobList(this.jobs)
   }
     
   renderNewUserForm(){
@@ -163,25 +168,31 @@ class User {
 }
 
 class Job {
-  constructor(userId = "", company = "", title = "", pay_amount = 0, pay_frequency = 0, jobId = ""){
+  newIncomeForm = document.getElementById("newIncomeForm")
+  constructor(userId = "", company = "", title = "", payAmount = 0, payFrequency = 0, jobId = ""){
     this.userId = userId
     this.company = company
     this.title = title
-    this.pay_frequency = pay_frequency
-    this.pay_amount = pay_amount
+    this.payFrequency = payFrequency
+    this.payAmount = payAmount
     this.id = jobId
     
-    if (jobId != "") return this.appendJobItem()
+    if (jobId != "") return this.addJobItem()
     if (company != "") return this.submitNewJobReq()
   }
   
-  renderJobs(jobs) {
+  renderJobList(jobs) {
     jobs.forEach (job => {
       new Job(job.user_id, job.company, job.title, job.pay_amount, job.pay_frequency, job.id)
     })
+
+    this.getUserCard().querySelector("button.addIncome").addEventListener("click", () => {
+      this.setIncomeFormUserId(this.userId);
+      this.toggleIncomeForm();
+    })
   }
 
-  getUserCardJobList(){
+  getUserCard(){
     let collection = document.querySelectorAll(".userCard")
     let userCard = ""
     collection.forEach(object => {
@@ -189,17 +200,81 @@ class Job {
         userCard = object
       }
     })
-    return userCard.querySelector("ul")
+    return userCard
   }
   
-  appendJobItem() {
-    let list = this.getUserCardJobList()
-    let income = parseInt(this.pay_amount * this.pay_frequency)
-    list.append(createLi(`job${this.id}`, `${this.company} - ${income}`))
+  addJobItem() {
+    let list = this.getUserCard().querySelector("ul")
+    let income = parseInt(this.payAmount * this.payFrequency)
+    let listItem = (createLi(`${this.id}`, `${this.company} - ${income}`))
+    listItem.append(createButton("remove", "Remove", this.removeIncome))
+    
+    list.append(listItem)
+  }
+  
+  renderNewIncomeForm(){
+    newIncomeForm.addEventListener('submit', newIncomeEvent => {
+      newIncomeEvent.preventDefault()
+      let company = newIncomeEvent.target.company.value;
+      let title = newIncomeEvent.target.title.value;
+      let payFrequency = newIncomeEvent.target.payFrequency.value;
+      let payAmount = newIncomeEvent.target.payAmount.value;
+      let userId = newIncomeEvent.target.getAttribute("userid")
+      
+      if (userId && company && title && payFrequency && payAmount) {
+        new Job(userId,company,title,payAmount,payFrequency)
+        this.toggleIncomeForm()
+      }
+    })
+  }
+    
+  toggleIncomeForm() {
+    if (newIncomeForm.classList.contains("hidden")) return newIncomeForm.classList.remove("hidden")
+    if (!newIncomeForm.classList.contains("hidden")) return newIncomeForm.classList.add("hidden")
+  }
+
+  setIncomeFormUserId(userId){
+    document.querySelector(".addIncomeForm").setAttribute("userId",userId)
   }
 
   submitNewJobReq() {
-    console.log(this)
+    let formData = {
+      "company": this.company,
+      "title": this.title,
+      "payFrequency": this.payFrequency,
+      "payAmount": this.payAmount,
+      "userId": this.userId
+    };
+    
+    console.log(formData)
+    let configObj = { method: "POST", headers: JSON_Headers, body: JSON.stringify(formData)} 
+    
+    return fetch(JOB_URL,configObj)
+    .then(response => response.json())
+    .then(json => {
+      new Job(json.user_id, json.company, json.title, json.pay_amount, json.pay_frequency, json.id)
+    })
+    .catch(error => alert("There was an error: "+error.message+"."));
+  }
+
+  removeIncome(button){
+    if (!newUserForm.classList.contains("hidden")) {newUserForm.classList.add("hidden")}
+    
+    let deleteUserUrl = `${JOB_URL}/${button.parentElement.id}`
+    
+    let configObj = { method: "DELETE", headers: JSON_Headers}
+    
+    return fetch(deleteUserUrl, configObj)
+    .then(resp => resp.json())
+    .then(json => {
+      if (json.error) {
+        console.log(json)
+      } else {
+        console.log(json)
+        button.parentElement.remove()
+      }
+    })
+    .catch(error => console.log(error.message));
   }
 }
 
