@@ -14,7 +14,7 @@
 
   <main>
     <div class="budgetCard">
-      <div class="budgetTitle">
+      <div class="budgetTitle blackShadow">
         <p>What is this budgets priority?</p>
         <button class="priority"></button>
       </div>
@@ -27,7 +27,7 @@
         </div>
         <div class="content hidden" id="incomeCardContent">
           <div class="usersCard"></div>
-          <button class="addUser">Add Income User</button>
+          <button class="addUser add">Add Income User</button>
           <div class="formContainer hidden" id="newUserForm">
             <form class = "addUserForm">
               <h3>Add a New User!</h3>
@@ -53,11 +53,11 @@
           <p id="totalSpending"></p>
         </div>
         <div class="content hidden" id="spendingCardContent">
-          <div class="monthlyBillsCard">
+          <div class="expensesCard">
           </div>
-          <button class="addMonthlyBill">Add A Monthly Bill</button>
+          <button class="addExpense add">Add A Monthly Bill</button>
           <div class="formContainer hidden" id="newExpenseForm">
-            <form class = "addMonthlyBillForm">
+            <form class = "addExpenseForm">
               <h3>Add a New Monthly Bill!</h3>
               <input class="input-text" type="text" name="name" placeholder="Bill Name" required>
               <input class="input-text" type="number" step=0.01 name="minimumPayment" placeholder="Minimum Monthly Payment" required>

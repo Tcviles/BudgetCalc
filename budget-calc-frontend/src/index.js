@@ -102,7 +102,7 @@ class User {
     userCard.append(document.createElement("ul"))
 
     let incomeButton = document.createElement("button")
-    incomeButton.classList.add("addIncome")
+    incomeButton.classList.add("add")
     incomeButton.innerText = "Add Income"
     userCard.append(incomeButton)
 
@@ -190,7 +190,7 @@ class Job {
       new Job(job.user_id, job.company, job.title, job.pay_amount, job.pay_frequency, job.id)
     })
 
-    this.getUserCard().querySelector("button.addIncome").addEventListener("click", () => {
+    this.getUserCard().querySelector("button.add").addEventListener("click", () => {
       this.setIncomeFormUserId(this.userId, userName);
       this.toggleIncomeForm();
     })
@@ -284,14 +284,15 @@ class Job {
 
 class Expense {
   newExpenseForm = document.getElementById("newExpenseForm")
+  billsCard = document.querySelector(".expensesCard")
   spendingCardContent = document.getElementById("spendingCardContent")
   spendingDropdown = document.getElementById("spendingCardDropdown")
   constructor(budgetId, name, minimumPayment, paymentDate, expenseId){
     this.budgetId = budgetId
     this.name = name
-    this.minimumPayment = minimumPayment 
-    this.paymentDate = paymentDate
-    this.expenseId = expenseId
+    this.minimumPayment = parseInt(minimumPayment)
+    this.paymentDate = parseInt(paymentDate)
+    this.id = expenseId
 
     // if (expenseId != "") return this.addExpenseCard()
     // if (name != "") return this.submitNewExpenseReq()
@@ -302,29 +303,69 @@ class Expense {
     let totalMonthlyPayments = this.calculateTotalMonthlySpending(expenses)
     this.spendingDropdown.innerHTML = `<p>Total Monthly Payments - ${totalMonthlyPayments}</p>`
     this.spendingDropdown.onclick = this.toggleSpendingContent
-    this.renderExpenseCards(expenses)
-    
+    this.renderExpenseCards(expenses)  
+    document.querySelector("button.addExpense").onclick = this.toggleNewBillForm
   //   debt.generateDebtCard(this.debts)
   //   expense.generateExpenseCard(this.expenses)
   //   spendingDiv.append(this.generateDebtDiv())
   //   debtDiv.append(createButton("addDebt", "Add A Debt", this.addDebt, this))\
+  }
+
+  renderExpenseCards(expenses) {
+    expenses.forEach (bill => {
+      new Debt(bill.budget_id, bill.name, bill.minimum_payment, bill.payment_date, bill.balance, bill.interest_rate, bill.id)
+    })
+  }
+
+  addExpenseCard(){
+    let expenseCard = createDiv("expenseCard",this.id)
+    expenseCard.append(createParagraph("expense", `${this.name} - $${this.minimumPayment}`))
+    let expenseCardInfo = document.createElement("ul")
+    expenseCardInfo.append(createLi(this.id, `Due on the ${this.paymentDate}.`))
+    expenseCard.append(expenseCardInfo)
+    expenseCard.append(createButton("add","Make Payment", this.makeAPayment))
+    this.billsCard.append(expenseCard)
+    return expenseCard
   }
   
   toggleSpendingContent(){
     if (spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.remove("hidden")
     if (!spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.add("hidden")
   }
+  
+  toggleNewBillForm(){
+    if (newExpenseForm.classList.contains("hidden")) return newExpenseForm.classList.remove("hidden")
+    if (!newExpenseForm.classList.contains("hidden")) return newExpenseForm.classList.add("hidden")
+  }
 
   calculateTotalMonthlySpending(listOfExpenses){
     return listOfExpenses.reduce((a,b)=>{return a += parseInt(b.minimum_payment)},0)
   }
+
+  makeAPayment(event){
+    console.log(event)
+  }
 }
 
 class Debt extends Expense {
-  constructor(budgetId, name, minimumPayment, paymentDate, balance, interest_rate){
-    super(budgetId, name, minimumPayment, paymentDate);
+  constructor(budgetId="", name="", minimumPayment="", paymentDate="", balance="", interestRate="", expenseId=""){
+    super(budgetId, name, minimumPayment, paymentDate, expenseId);
     this.balance = balance;
-    this.interest_rate = interest_rate;
+    this.interestRate = interestRate;
+
+    if ((expenseId!="") && (balance!="")) return this.addDebtCard()
+    if (expenseId!="") return this.addExpenseCard()
+    // if (balance!="") return this.submitNewDebtReq()
+    // if (name!="") return this.submitNewExpenseReq()
+  }
+
+  addDebtCard() {
+    let debtCard = this.addExpenseCard()
+    let debtCardInfo = debtCard.querySelector("ul")
+    
+    debtCardInfo.append(createLi(this.id, `Remaining balance is ${this.balance}.`))
+    debtCardInfo.append(createLi(this.id, `The interest rate is ${this.interestRate}`))
+    console.log(debtCard)
   }
 
   
