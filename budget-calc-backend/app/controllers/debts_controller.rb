@@ -15,6 +15,16 @@ class DebtsController < ApplicationController
       newDebt = Debt.create(name: name, minimum_payment:minimumPayment, payment_date:paymentDate, balance:balance, interest_rate:interestRate, budget_id: budget.id)
       render json: DebtSerializer.new(newDebt).to_serialized_json
     end
+  end  
+
+  def makePayment
+    debt = Debt.find_by(id: params[:id])
+    payment = params[:paymentAmt]
+    debt.balance -= payment
+    debt.last_paid = Date.today.to_s(:short)
+    debt.save
+
+    render json: DebtSerializer.new(debt).to_serialized_json
   end
 
   def delete

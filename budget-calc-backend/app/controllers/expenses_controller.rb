@@ -15,6 +15,14 @@ class ExpensesController < ApplicationController
     end
   end
 
+  def makePayment
+    expense = Expense.find_by(id: params[:id])
+    expense.last_paid = Date.today.to_s(:short)
+    expense.save
+
+    render json: ExpenseSerializer.new(expense).to_serialized_json
+  end
+
   def delete
     expense = Expense.find_by(id: params[:id])
     expense.destroy

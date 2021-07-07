@@ -203,13 +203,13 @@ class Job {
   }
 
   removeIncome(button){
-    if (!newUserForm.classList.contains("hidden")) {newUserForm.classList.add("hidden")}
+    hideForm(newUserForm)
     
-    let deleteUserUrl = `${JOB_URL}/${button.parentElement.id}`
+    let deleteIncomeUrl = `${JOB_URL}/${button.parentElement.id}`
     
     let configObj = { method: "DELETE", headers: JSON_Headers}
     
-    return fetch(deleteUserUrl, configObj)
+    return fetch(deleteIncomeUrl, configObj)
     .then(resp => resp.json())
     .then(json => {
       if (json.error) {
@@ -272,46 +272,41 @@ class Expense {
   }
   
   toggleSpendingContent(){ toggleForm(spendingCardContent) }
-  
-  renderExpenseCards(expenses) {
-    expenses.forEach (expense => {
-      new Debt(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, expense.balance, expense.interest_rate, expense.last_paid, expense.id)
-    })
-  }
 
-  updateDropdownBills(amt){
+  updateDropdownBills(){
     let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalBills"))
-    let newAmt = prevAmt += amt
+    let newAmt = prevAmt += this.minimumPayment
     spendingCardDropdown.setAttribute("totalBills", newAmt)
     spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
   }
 
-  getExpType(balance){
-    (balance!="") ? "debt" : "expense"
-  }
+  getExpType(balance){ (balance!="") ? "debt" : "expense" }
 
   addExpenseCard(){
-    let expenseCard = createDiv(["expenseCard"],this.id)
-    let expenseCardInfo = document.createElement("ul")
-    let type = this.getExpType(this.balance)
-    this.updateDropdownBills(this.minimumPayment)
+    this.updateDropdownBills()
+    let expenseCard = this.addDetailsToExpenseCard()
 
-    expenseCard.append(createParagraph("expense", `${this.name} - $${this.minimumPayment}`))
-
-    expenseCardInfo.append(createLi(this.id, `Due on the ${this.paymentDate}.`))
-    expenseCardInfo.append(createLi("", `Last paid on ${this.lastPaid}`))
-    expenseCard.append(expenseCardInfo)
-    let makePaymentBtn = createButton("add", "Make Payment")
-    makePaymentBtn.addEventListener("click",() => {
-      this.toggleNewPaymentForm(`${this.id}${type}`, this.name)
-      this.updateMinPmtEvt(this.minimumPayment)
-    })
+    let makePaymentBtn = createButton("update", "Make Payment")
+    makePaymentBtn.addEventListener("click",() => { this.toggleNewPaymentForm(); })
     expenseCard.append(makePaymentBtn)
     expenseCard.append(createButton("remove","Remove Expense", this.removeExpReq))
     this.expensesCard.append(expenseCard)
 
     return expenseCard
   }
+
+  addDetailsToExpenseCard(){
+    let expenseCard = createDiv(["expenseCard"],this.id)
+    let expenseCardInfo = document.createElement("ul")
+
+    expenseCard.append(createParagraph("expense", `${this.name} - $${this.minimumPayment}`))
+    expenseCardInfo.append(createLi(this.id, `Due on the ${this.paymentDate}.`))
+    expenseCardInfo.append(createLi("", `Last paid on ${this.lastPaid}`))
+    expenseCard.append(expenseCardInfo)
+
+    return expenseCard
+  }
+  
 
   connectNewExpenseForm(){
     newExpenseForm.addEventListener("submit", newExpenseEvent => {
@@ -378,16 +373,18 @@ class Expense {
             .catch(error => alert("There was an error: "+error.message));
   }
   
-  toggleNewPaymentForm(expenseId = "", expenseName = ""){
+  toggleNewPaymentForm(){
     hideForm(newExpenseForm)
+    let expenseId = `${this.id}${this.getExpType(this.balance)}`
     document.querySelector(".checkbox").checked = false
     if ((expenseId=="") || (newPaymentForm.getAttribute("expenseId") == expenseId)){
       newPaymentForm.setAttribute("expenseId","")
       return hideForm(newPaymentForm)
     } else {
       newPaymentForm.setAttribute(`expenseId`,expenseId)
-      newPaymentForm.querySelector("h3").innerText = `Make A Payment On Your ${expenseName} Bill!`
+      newPaymentForm.querySelector("h3").innerText = `Make A Payment On Your ${this.name} Bill!`
       document.getElementById("updExpPmtAmt").value = 0
+      this.updateMinPmtEvt(this.minimumPayment)
       return showForm(newPaymentForm)
     }
   }
@@ -430,7 +427,7 @@ class Debt extends Expense {
   addDebtCard() {
     let debtCard = this.addExpenseCard()
     let debtCardInfo = debtCard.querySelector("ul")
-    this.updateDropdownBalance(this.balance)
+    this.updateDropdownBalance()
     
     debtCardInfo.append(createLi(this.id, `Remaining balance is ${this.balance}.`))
     debtCardInfo.append(createLi(this.id, `The interest rate is ${this.interestRate}`))
@@ -439,9 +436,9 @@ class Debt extends Expense {
     debtCard.classList.add("debtCard")
   }
 
-  updateDropdownBalance(amt){
+  updateDropdownBalance(){
     let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalDebt"))
-    let newAmt = prevAmt += amt
+    let newAmt = prevAmt += this.balance
     spendingCardDropdown.setAttribute("totalDebt", newAmt)
     let totalDebtP = document.createElement("p")
     totalDebtP.innerText = `Total Debt - ${newAmt}`
