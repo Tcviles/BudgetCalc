@@ -238,17 +238,19 @@ class Expense {
   }
   
   generateSpendingCard(){
-    this.expensesCard.innerHTML=""
+    this.resetExpensesCard()
     this.getAllExpenses()
-    // if (allExpenses.length == 0) {
-      this.spendingDropdown.innerHTML="<p>You have no bills!!!</p>"
-    // } else {
-    //   // ${this.calculateTotalMonthlySpending(allExpenses)}
-    //   this.spendingDropdown.innerHTML = `<p>Total Monthly Payments - </p>`
-    // }
-    this.spendingDropdown.onclick = this.toggleSpendingContent  
+    this.getAllDebts()
+  }
+
+  resetExpensesCard(){
+    this.expensesCard.innerHTML=""
+    this.spendingDropdown.setAttribute("totalBills",0)
+    this.spendingDropdown.setAttribute("totalDebt",0)
+    this.spendingDropdown.innerHTML="<p>You have no bills!!!</p>"
+    this.spendingDropdown.onclick = this.toggleSpendingContent
     this.connectNewExpenseForm()
-    this.connectNewPaymentForm()
+    this.connectNewPaymentForm() 
   }
 
   getAllExpenses(){
@@ -260,14 +262,16 @@ class Expense {
       .catch(error => alert("There was an error: "+error.message+"."));
   }
 
-  calculateTotalMonthlySpending(listOfExpenses = []){
-    return listOfExpenses.reduce((a,b)=>{return a += parseInt(b.minimum_payment)},0)
+  getAllDebts(){
+    fetch(DEBT_URL)
+      .then(response => response.json())
+      .then(debts => debts.forEach(debt=> {
+        new Debt(debt.budget_id, debt.name, debt.minimum_payment, debt.payment_date, debt.balance, debt.interest_rate, debt.last_paid, debt.id)
+      }))
+      .catch(error => alert("There was an error: "+error.message+"."));
   }
   
-  toggleSpendingContent(){
-    if (spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.remove("hidden")
-    if (!spendingCardContent.classList.contains("hidden")) return spendingCardContent.classList.add("hidden")
-  }
+  toggleSpendingContent(){ toggleForm(spendingCardContent) }
   
   renderExpenseCards(expenses) {
     expenses.forEach (expense => {
@@ -275,15 +279,22 @@ class Expense {
     })
   }
 
+  updateDropdownBills(amt){
+    let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalBills"))
+    let newAmt = prevAmt += amt
+    spendingCardDropdown.setAttribute("totalBills", newAmt)
+    spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
+  }
+
+  getExpType(balance){
+    (balance!="") ? "debt" : "expense"
+  }
+
   addExpenseCard(){
     let expenseCard = createDiv(["expenseCard"],this.id)
     let expenseCardInfo = document.createElement("ul")
-    let type = ""
-    if (this.balance!="") {
-      type = "debt"
-    } else {
-      type = "expense"
-    }
+    let type = this.getExpType(this.balance)
+    this.updateDropdownBills(this.minimumPayment)
 
     expenseCard.append(createParagraph("expense", `${this.name} - $${this.minimumPayment}`))
 
@@ -419,12 +430,22 @@ class Debt extends Expense {
   addDebtCard() {
     let debtCard = this.addExpenseCard()
     let debtCardInfo = debtCard.querySelector("ul")
+    this.updateDropdownBalance(this.balance)
     
     debtCardInfo.append(createLi(this.id, `Remaining balance is ${this.balance}.`))
     debtCardInfo.append(createLi(this.id, `The interest rate is ${this.interestRate}`))
     debtCard.querySelector(".remove").onclick = this.removeDebtReq
     debtCard.classList.remove("expenseCard")
     debtCard.classList.add("debtCard")
+  }
+
+  updateDropdownBalance(amt){
+    let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalDebt"))
+    let newAmt = prevAmt += amt
+    spendingCardDropdown.setAttribute("totalDebt", newAmt)
+    let totalDebtP = document.createElement("p")
+    totalDebtP.innerText = `Total Debt - ${newAmt}`
+    spendingCardDropdown.append(totalDebtP)
   }
 
   submitNewDebtReq(){
