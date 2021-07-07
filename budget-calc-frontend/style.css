@@ -7,63 +7,67 @@ body {
 
 * {
   border-radius: 10px;
+  font-size: 16px;
 }
 
 header {
+  position: relative;
   background-image: url('images/budgetSiteBackground.png');
   background-size: cover;
   background-repeat: no-repeat;
-  border-bottom: black solid 1px;
-  margin: 0 auto;
-  height: 250px;
+  border-bottom: black solid 3px;
+  height: 15%;
   border-radius: 0 0 10px 10px;
+  overflow: hidden;
 }
 
 header h2 {
-  text-align: right;
-  font-size: 60px;
+  position: absolute;
+  bottom: 0;
+  right: 1rem;
+  font-size: 4rem;
   color: white;
-  padding: 100px 50px 50px 250px;
-}
-
-main {
-  padding: 10px 0px 30px 5px;
 }
 
 div {
+  display: grid;
+  grid-gap: 1rem;
   border: black solid 5px;
-  margin: 5px;
-  max-width: 95vw;
+  padding: 1rem;
+  max-width: 94%;
 }
 
 div.blackShadow {
-  width: 95%;
+  width: 97%;
   background-color: grey;
   box-shadow: 10px 10px black;
   margin-bottom: 20px;
 }
 
 div.budgetCard {
-  display: grid;
-  grid-gap: 20px;
   background-color: #eeeeee;
   box-shadow: 10px 10px grey;
-  margin-right: 15px;
+  margin: 0.5rem;
+  width: 97%;
 }
 
 div.budgetTitle {
-  display: grid;
-  grid-template-columns: auto 400px;
+  grid-template-columns: 48% 48%;
   height: fit-content;
-  padding: 10px;
-  border: darkslategray solid 1px;
+}
+
+.budgetTitle p {
+  margin: auto auto auto 0;
 }
 
 /* User Section */
 
 div.incomeCard, div.spendingCard {
-  display: grid;
-  overflow: none;
+  overflow: hidden;
+}
+
+.dropdown {
+  grid-template-columns: 48% 48%;
 }
 
 div.incomeCard .usersCard, .expensesCard{
@@ -73,14 +77,10 @@ div.incomeCard .usersCard, .expensesCard{
   overflow-x: scroll;
 }
 
-/* div.content, .dropdown{
-} */
-
 div.userCard, .expenseCard, .debtCard {
   background-color: #888888;
   border: black solid 1px;
-  width: 90%;
-  padding: 10px;
+  padding: 2em;
   min-width: fit-content;
 }
 
@@ -88,18 +88,9 @@ div.userCard, .expenseCard, .debtCard {
 .hidden {
   visibility: hidden;
   height: 0;
-}
-
-.container {
-  padding: 1rem;
-  width: stretch;
-  display: none;
-  background: #515DA2;
-  opacity: .8;
-}
-
-.add-user-form {
-  width: 80%
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 .submit {
@@ -125,7 +116,7 @@ div.userCard, .expenseCard, .debtCard {
 .input-text {
   border-radius: 5px;
   height: 2rem;
-  width: 60%;
+  width: 70%;
   font-size: 18px;
   font-family: monospace;
   margin: 3px;
@@ -135,30 +126,34 @@ p {
   font-size: 1.5em;
   color: black;
   font-family: Helvetica;
+  margin: 0;
 }
 
 p.helpText {
-  font-size: 15px;
-  color: black;
-  font-family: Helvetica;
+  font-size: 1em;
+}
+
+ul {
+  padding: 1rem;
 }
 
 li {
-  font-size: 1.05em;
+  font-size: 1.2em;
   list-style: none;
-  padding-right: 20px;
 }
 
 button {
-  font-size: 20px;
+  right: 0;
+  font-size: 1rem;
   color: #fff;
   background-color: green;
+  padding: .5rem;
 }
 
 button.remove {
-  font-size: 12px;
+  font-size: .8rem;
   background-color: red;
-  margin: 2px 2px 5px 2px;
+  margin: 2px 2px 5px 20px;
 }
 
 /* @media only screen and (min-width: 400px) {
