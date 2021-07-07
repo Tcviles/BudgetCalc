@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Budget Calc</title>
   <link rel="stylesheet" href="style.css">
+  <script src="./src/helper.js"></script>
   <script defer src="./src/index.js"></script>
 </head>
 <body>
@@ -19,7 +20,7 @@
         <button class="priority"></button>
       </div>
       <div class="plan blackShadow">
-        <div><h2>This is where a plan will go</h2></div>
+        <div><p>Here is the plan!</p></div>
       </div>
       <div class="incomeCard blackShadow">
         <div class="dropdown" id="incomeCardDropdown">
@@ -32,18 +33,18 @@
             <form class = "addUserForm">
               <h3>Add a New User!</h3>
               <input class="input-text" type="text" name="name" placeholder="First Name" required>
-              <input class="submit" type="submit" name="submit" placeholder="Submit New User!">
+              <input class="submit" type="submit" name="submit" placeholder="Submit">
             </form>
           </div>
           <div class="formContainer hidden" id="newIncomeForm">
             <form class = "addIncomeForm">
               <h3>Add Income to </h3>
-              <p class="helpText">For weekly paychecks, put 4.3. For Biweekly, put 2.16</p>
+              <p class="helpText">For weekly paychecks, put payment frequency of 4.3. For Biweekly, put 2.16</p>
               <input class="input-text" type="text" name="company" placeholder="Company Name" required>
               <input class="input-text" type="text" name="title" placeholder="Title" required>
               <input class="input-text" type="number" step=0.01 name="payFrequency" placeholder="How many times per month do you get paid?" required>
               <input class="input-text" type="number" name="payAmount" placeholder="Estimated take home pay" required>
-              <input class="submit" type="submit" name="submit" placeholder="Submit New Income!">
+              <input class="submit" type="submit" name="submit" placeholder="Submi!">
             </form>
           </div>
         </div>
@@ -61,10 +62,19 @@
               <h3>Add a New Monthly Bill!</h3>
               <input class="input-text" type="text" name="name" placeholder="Bill Name" required>
               <input class="input-text" type="number" step=0.01 name="minimumPayment" placeholder="Minimum Monthly Payment" required>
-              <input class="input-text" type="number" name="paymenDate" placeholder="What day of the month is this due?" required>
+              <input class="input-text" type="number" name="paymentDate" placeholder="What day of the month is this due?" required>
               <input class="input-text" type="number" step=0.01 name="balance" placeholder="(Optional) - Remaining Balance">
               <input class="input-text" type="number" step=0.01 name="interestRate" placeholder="(Optional) - Interest Rate" >
-              <input class="submit" type="submit" name="submit" placeholder="Submit New Bill!">
+              <input class="submit" type="submit" name="submit" placeholder="Submit">
+            </form>
+          </div>
+          <div class="formContainer hidden" id="newPaymentForm">
+            <form class = "updateExpenseForm">
+              <h3>Make a Payment!</h3>
+              <label for="minPaymentChecked">Minimum Payment?</label>
+              <input class="checkbox" type="checkbox" name="minPaymentChecked" value="minimumPayment">
+              <input class="input-text" id="updExpPmtAmt" type="number" step=0.01 name="paymentAmt" placeholder="Payment Amount">
+              <input class="submit" type="submit" name="submit" placeholder="Submit">
             </form>
           </div>
         </div>

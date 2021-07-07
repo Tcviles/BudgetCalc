@@ -3,8 +3,8 @@ class CreateJobs < ActiveRecord::Migration[6.1]
     create_table :jobs do |t|
       t.string :company
       t.string :title
-      t.string :pay_frequency
-      t.string :pay_amount
+      t.float :pay_frequency
+      t.float :pay_amount
       t.references :user, null: false, foreign_key: true
 
       t.timestamps

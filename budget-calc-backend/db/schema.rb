@@ -20,10 +20,11 @@ ActiveRecord::Schema.define(version: 2021_06_21_231238) do
 
   create_table "debts", force: :cascade do |t|
     t.string "name"
-    t.string "balance"
-    t.string "interest_rate"
-    t.string "payment_date"
-    t.string "minimum_payment"
+    t.string "last_paid"
+    t.integer "payment_date"
+    t.float "balance"
+    t.float "interest_rate"
+    t.float "minimum_payment"
     t.integer "budget_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -32,8 +33,9 @@ ActiveRecord::Schema.define(version: 2021_06_21_231238) do
 
   create_table "expenses", force: :cascade do |t|
     t.string "name"
-    t.string "payment_date"
-    t.string "minimum_payment"
+    t.string "last_paid"
+    t.integer "payment_date"
+    t.float "minimum_payment"
     t.integer "budget_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -43,8 +45,8 @@ ActiveRecord::Schema.define(version: 2021_06_21_231238) do
   create_table "jobs", force: :cascade do |t|
     t.string "company"
     t.string "title"
-    t.string "pay_frequency"
-    t.string "pay_amount"
+    t.float "pay_frequency"
+    t.float "pay_amount"
     t.integer "user_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -53,7 +55,7 @@ ActiveRecord::Schema.define(version: 2021_06_21_231238) do
 
   create_table "users", force: :cascade do |t|
     t.string "name"
-    t.string "income"
+    t.float "income"
     t.integer "budget_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

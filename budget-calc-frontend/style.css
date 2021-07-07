@@ -76,7 +76,7 @@ div.incomeCard .usersCard, .expensesCard{
 /* div.content, .dropdown{
 } */
 
-div.userCard, .expenseCard {
+div.userCard, .expenseCard, .debtCard {
   background-color: #888888;
   border: black solid 1px;
   width: 90%;
