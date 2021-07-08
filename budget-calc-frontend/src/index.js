@@ -239,6 +239,7 @@ class Expense {
     this.id = expenseId
 
     if (expenseId != "") return this.addCard()
+    if (name != "") return this.submitNewExpenseReq()
   }
   
   generateSpendingCard(){
@@ -281,19 +282,22 @@ class Expense {
     let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
     let newAmt = parseFloat(prevAmt + this.minimumPayment).toFixed(2);
     spendingCardDropdown.setAttribute("totalBills", newAmt)
-    console.log(this.name, this.minimumPayment, prevAmt, newAmt)
     spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
   }
 
-  getExpType(balance){ (balance!="") ? "debt" : "expense" }
+  getExpType(balance){ 
+    if (balance!="") return "debt"
+    return "expense" 
+  }
 
   addCard(){
-    console.log("expense add card", this)
     this.updateDropdownBills()
     let expenseCard = this.addDetailsToExpenseCard()
 
     let makePaymentBtn = createButton("update", "Make Payment")
-    makePaymentBtn.addEventListener("click",() => { this.toggleNewPaymentForm(); })
+    makePaymentBtn.addEventListener("click",() => { 
+      this.toggleNewPaymentForm(); 
+    })
     expenseCard.append(makePaymentBtn)
     expenseCard.append(createButton("remove","Remove Expense", this.removeExpReq))
     this.expensesCard.append(expenseCard)
@@ -323,7 +327,11 @@ class Expense {
       let balance = newExpenseEvent.target.balance.value;
       let interestRate = newExpenseEvent.target.interestRate.value;
       if (name && minimumPayment && paymentDate) {
-        new Debt(this.budgetId, name, minimumPayment, paymentDate, balance, interestRate)
+        if (balance) {
+          new Debt(this.budgetId, name, minimumPayment, paymentDate, balance, interestRate)
+        } else {
+          new Expense(this.budgetId, name, minimumPayment, paymentDate)
+        }
         hideForm(newExpenseForm)
       }
     })
@@ -444,7 +452,7 @@ class Debt extends Expense {
     spendingCardDropdown.append(totalDebtP)
   }
 
-  submitNewDebtReq(){
+  submitNewExpenseReq(){
     let formData = {
       "name": this.name,
       "minimumPayment": this.minimumPayment, 
