@@ -258,22 +258,28 @@ class Expense {
     this.connectNewPaymentForm() 
   }
 
-  getAllExpenses(){
-    fetch(EXPENSE_URL)
-      .then(response => response.json())
-      .then(expenses => expenses.forEach(expense=> {
-        new Expense(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, 0, 0, expense.last_paid, expense.id)
-      }))
-      .catch(error => alert("There was an error: "+error.message+"."));
+  async getAllExpenses(){
+    try {
+      const res = await fetch(EXPENSE_URL)
+      const expenses = await res.json()
+      expenses.forEach(expense=> {
+          new Expense(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, 0, 0, expense.last_paid, expense.id)
+      })
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  getAllDebts(){
-    fetch(DEBT_URL)
-      .then(response => response.json())
-      .then(debts => debts.forEach(debt=> {
-        new Debt(debt.budget_id, debt.name, debt.minimum_payment, debt.payment_date, debt.balance, debt.interest_rate, debt.last_paid, debt.id)
-      }))
-      .catch(error => alert("There was an error: "+error.message+"."));
+  async getAllDebts(){
+    try {
+      const res = await fetch(DEBT_URL)
+      const debts = await res.json()
+      debts.forEach(debt=> {
+         new Debt(debt.budget_id, debt.name, debt.minimum_payment, debt.payment_date, debt.balance, debt.interest_rate, debt.last_paid, debt.id)
+      })
+    } catch (err) {
+      console.error(err);
+    }
   }
   
   toggleSpendingContent(){ toggleForm(spendingCardContent) }
