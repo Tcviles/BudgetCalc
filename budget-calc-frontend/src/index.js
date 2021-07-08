@@ -228,13 +228,17 @@ class Expense {
   expensesCard = document.querySelector(".expensesCard")
   spendingCardContent = document.getElementById("spendingCardContent")
   spendingDropdown = document.getElementById("spendingCardDropdown")
-  constructor(budgetId, name, minimumPayment, paymentDate, lastPaid, expenseId){
+  constructor(budgetId="", name="", minimumPayment="", paymentDate="",  balance=0, interestRate=0, lastPaid="", expenseId=""){
     this.budgetId = budgetId
     this.name = name
     this.minimumPayment = minimumPayment
     this.paymentDate = paymentDate
+    this.balance = balance
+    this.interestRate = interestRate
     this.lastPaid = lastPaid
     this.id = expenseId
+
+    if (expenseId != "") return this.addCard()
   }
   
   generateSpendingCard(){
@@ -257,7 +261,7 @@ class Expense {
     fetch(EXPENSE_URL)
       .then(response => response.json())
       .then(expenses => expenses.forEach(expense=> {
-        new Debt(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, "", "", expense.last_paid, expense.id)
+        new Expense(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, 0, 0, expense.last_paid, expense.id)
       }))
       .catch(error => alert("There was an error: "+error.message+"."));
   }
@@ -274,15 +278,17 @@ class Expense {
   toggleSpendingContent(){ toggleForm(spendingCardContent) }
 
   updateDropdownBills(){
-    let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalBills"))
-    let newAmt = prevAmt += this.minimumPayment
+    let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
+    let newAmt = parseFloat(prevAmt + this.minimumPayment).toFixed(2);
     spendingCardDropdown.setAttribute("totalBills", newAmt)
+    console.log(this.name, this.minimumPayment, prevAmt, newAmt)
     spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
   }
 
   getExpType(balance){ (balance!="") ? "debt" : "expense" }
 
-  addExpenseCard(){
+  addCard(){
+    console.log("expense add card", this)
     this.updateDropdownBills()
     let expenseCard = this.addDetailsToExpenseCard()
 
@@ -352,7 +358,7 @@ class Expense {
     return fetch(EXPENSE_URL, configObj)
       .then(response => response.json())
       .then(json => {
-        new Debt(json.budgetId, json.name, json.minimumPayment, json.paymentDate, "", "", "", json.id)
+        new Expense(json.budgetId, json.name, json.minimumPayment, json.paymentDate, 0, 0, "", json.id)
       })
       .catch(error => alert("There was an error: "+error.message+"."));
   }
@@ -414,18 +420,11 @@ class Expense {
 
 class Debt extends Expense {
   constructor(budgetId="", name="", minimumPayment="", paymentDate="",  balance="", interestRate="", lastPaid="", expenseId=""){
-    super(budgetId, name, minimumPayment, paymentDate, lastPaid, expenseId);
-    this.balance = balance;
-    this.interestRate = interestRate;
-
-    if ((expenseId!="") && (balance!="")) return this.addDebtCard()
-    if (expenseId!="") return this.addExpenseCard()
-    if (balance!="") return this.submitNewDebtReq()
-    if (name!="") return this.submitNewExpenseReq()
+    super(budgetId, name, minimumPayment, paymentDate, balance, interestRate, lastPaid, expenseId);
   }
 
-  addDebtCard() {
-    let debtCard = this.addExpenseCard()
+  addCard() {
+    let debtCard = super.addCard()
     let debtCardInfo = debtCard.querySelector("ul")
     this.updateDropdownBalance()
     
