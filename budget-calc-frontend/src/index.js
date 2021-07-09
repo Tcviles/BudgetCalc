@@ -285,7 +285,6 @@ class Expense {
     this.expensesCard.innerHTML=""
     this.spendingDropdown.setAttribute("totalBills",0)
     this.spendingDropdown.setAttribute("totalDebt",0)
-    this.spendingDropdown.innerHTML="<p>You have no bills!!!</p>"
     this.spendingDropdown.onclick = this.toggleSpendingContent
     this.connectNewExpenseForm()
     this.connectNewPaymentForm() 
@@ -309,7 +308,7 @@ class Expense {
     let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
     let newAmt = parseFloat(prevAmt + amt).toFixed(2);
     spendingCardDropdown.setAttribute("totalBills", newAmt)
-    spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
+    document.getElementById("totalMinPayments").innerText = `Total Minimum Payments - ${newAmt}`
   }
 
   getExpType(balance){ 
@@ -485,17 +484,13 @@ class Debt extends Expense {
     debtCardInfo.append(createLi(this.id, `Remaining balance is ${this.balance}.`))
     debtCardInfo.append(createLi(this.id, `The interest rate is ${this.interestRate}`))
     debtCard.querySelector(".remove").onclick = this.removeDebtReq
-    debtCard.classList.remove("expenseCard")
-    debtCard.classList.add("debtCard")
   }
 
   static updateDropdownBalance(amount){
     let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalDebt"))
     let newAmt = parseFloat(prevAmt + amount).toFixed(2);
     spendingCardDropdown.setAttribute("totalDebt", newAmt)
-    let totalDebtP = document.getElementById("totalDebtP") ?? createParagraph("totalDebtP")
-    totalDebtP.innerText = `Total Debt - ${newAmt}`
-    spendingCardDropdown.append(totalDebtP)
+    document.getElementById("totalDebtP").innerText = `Total Debt - ${newAmt ?? 0}`
   }
 
   submitNewExpenseReq(){
