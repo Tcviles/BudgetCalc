@@ -1,4 +1,37 @@
-class User {
+class Budget {
+  priorityButton = document.querySelector("button.priority")
+  
+  constructor (id, priority) {
+    this.id = id
+    this.priority = priority
+    this.setUpPriorityButton()
+  }
+
+  setUpPriorityButton(){
+    this.priorityButton.innerText = this.priority
+    this.priorityButton.onclick = () => this.sendPriorityUpdate()
+  }
+
+  togglePriorityText() {
+    if (this.priorityButton.innerText == "Interest") return "Payoff"
+    if (this.priorityButton.innerText != "Interest") return "Interest"
+  }
+  
+  sendPriorityUpdate() {
+    let updateBudgetUrl = `${BUDGET_URL}/${this.id}`
+    
+    let formData = { "priority": this.togglePriorityText() };
+    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
+  
+    return fetch(updateBudgetUrl,configObj)
+      .then(response => response.json())
+      .then(json => this.priorityButton.innerText = json.priority)
+      .catch(error => alert("There was an error: "+error.message+"."));
+  }
+
+}
+
+ class User {
   newUserForm = document.getElementById("newUserForm")
   incomeCardContent = document.getElementById("incomeCardContent")
   incomeCardDropdown = document.getElementById("incomeCardDropdown")
@@ -244,8 +277,8 @@ class Expense {
   
   generateSpendingCard(){
     this.resetExpensesCard()
-    this.getAllExpenses()
-    this.getAllDebts()
+    Expense.getExpenses()
+    Debt.getDebts()
   }
 
   resetExpensesCard(){
@@ -258,7 +291,7 @@ class Expense {
     this.connectNewPaymentForm() 
   }
 
-  async getAllExpenses(){
+  static async getExpenses(){
     try {
       const res = await fetch(EXPENSE_URL)
       const expenses = await res.json()
@@ -269,24 +302,12 @@ class Expense {
       console.error(err);
     }
   }
-
-  async getAllDebts(){
-    try {
-      const res = await fetch(DEBT_URL)
-      const debts = await res.json()
-      debts.forEach(debt=> {
-         new Debt(debt.budget_id, debt.name, debt.minimum_payment, debt.payment_date, debt.balance, debt.interest_rate, debt.last_paid, debt.id)
-      })
-    } catch (err) {
-      console.error(err);
-    }
-  }
   
-  toggleSpendingContent(){ toggleForm(spendingCardContent) }
+  toggleSpendingContent(){ toggleHidden(spendingCardContent) }
 
-  updateDropdownBills(){
+  static updateDropdownBills(amt){
     let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
-    let newAmt = parseFloat(prevAmt + this.minimumPayment).toFixed(2);
+    let newAmt = parseFloat(prevAmt + amt).toFixed(2);
     spendingCardDropdown.setAttribute("totalBills", newAmt)
     spendingCardDropdown.innerHTML=`<p>Total Minimum Payments - ${newAmt}</p>`
   }
@@ -297,7 +318,7 @@ class Expense {
   }
 
   addCard(){
-    this.updateDropdownBills()
+    Expense.updateDropdownBills(this.minimumPayment)
     let expenseCard = this.addDetailsToExpenseCard()
 
     let makePaymentBtn = createButton("update", "Make Payment")
@@ -317,7 +338,7 @@ class Expense {
 
     expenseCard.append(createParagraph("expense", `${this.name} - $${this.minimumPayment}`))
     expenseCardInfo.append(createLi(this.id, `Due on the ${this.paymentDate}.`))
-    expenseCardInfo.append(createLi("", `Last paid on ${this.lastPaid}`))
+    expenseCardInfo.append(createLi("", `Last paid on ${this.lastPaid ?? "never"}.`))
     expenseCard.append(expenseCardInfo)
 
     return expenseCard
@@ -344,10 +365,10 @@ class Expense {
     document.querySelector("button.addExpense").onclick = this.toggleNewExpenseForm
   }
 
-  updateMinPmtEvt(amount) {
+  updateMinPmtEvt() {
     document.querySelector(".checkbox").addEventListener("click", () => {
       if (document.querySelector("input:checked")) {
-        document.getElementById("updExpPmtAmt").value = amount
+        document.getElementById("updExpPmtAmt").value = this.minimumPayment
       } else {
         document.getElementById("updExpPmtAmt").value = 0
       }
@@ -356,10 +377,10 @@ class Expense {
   
   toggleNewExpenseForm(){ 
     hideForm(newPaymentForm)
-    toggleForm(newExpenseForm) 
+    toggleHidden(newExpenseForm) 
   }
 
-  submitNewExpenseReq(){
+  async submitNewExpenseReq(){
     let formData = {
       "name": this.name,
       "minimumPayment": this.minimumPayment, 
@@ -369,28 +390,29 @@ class Expense {
 
     let configObj = { method: "POST", headers: JSON_Headers, body: JSON.stringify(formData)}
 
-    return fetch(EXPENSE_URL, configObj)
-      .then(response => response.json())
-      .then(json => {
-        new Expense(json.budgetId, json.name, json.minimumPayment, json.paymentDate, 0, 0, "", json.id)
-      })
-      .catch(error => alert("There was an error: "+error.message+"."));
+    try {
+      const resp = await fetch(EXPENSE_URL, configObj)
+      const json = await resp.json()
+      new Expense(json.budget_id, json.name, json.minimum_payment, json.payment_date, 0, 0, "", json.id)
+    } catch (err) {
+      console.error(err)
+    }
+    
   }
 
-  removeExpReq(button){
+  async removeExpReq(button){
     let deleteExpUrl = `${EXPENSE_URL}/${button.parentElement.id}`
     let configObj = { method: "DELETE", headers: JSON_Headers}
 
-    return fetch(deleteExpUrl, configObj)
-            .then(response => response.json())
-            .then(json => {
-              if (json.error) {
-                console.log(json)
-              } else {
-                button.parentElement.remove()
-              }
-            })
-            .catch(error => alert("There was an error: "+error.message));
+    try {
+      const resp = await fetch(deleteExpUrl, configObj)
+      const json = await resp.json()
+      if (json.error) return console.error(json.error)
+      Expense.updateDropdownBills(0 - json.minimum_payment)
+      return button.parentElement.remove()
+    } catch (err) {
+      console.error(err)
+    }
   }
   
   toggleNewPaymentForm(){
@@ -404,7 +426,7 @@ class Expense {
       newPaymentForm.setAttribute(`expenseId`,expenseId)
       newPaymentForm.querySelector("h3").innerText = `Make A Payment On Your ${this.name} Bill!`
       document.getElementById("updExpPmtAmt").value = 0
-      this.updateMinPmtEvt(this.minimumPayment)
+      this.updateMinPmtEvt()
       return showForm(newPaymentForm)
     }
   }
@@ -416,19 +438,25 @@ class Expense {
       let expId = parseInt(formExpId);
       let amount = newPaymentEvent.target.paymentAmt.value;
       if (formExpId.includes("debt")) {
-        this.submitDebtPayReq(expId, amount)
+        Debt.submitPayment(expId, amount)
       } else {
-        this.submitExpensePayRequest(expId, amount)
+        Expense.submitPayment(expId, amount)
       }
     })
   }
 
-  submitExpensePayRequest(expId, amount) {
-    console.log("expenseReq",expId,amount)
-  }
+  static async submitPayment(expId, amount) {
+    let updateExpenseUrl = `${EXPENSE_URL}/${expId}`
+    let formData = {"lastPaid": "today"}
+    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
 
-  submitDebtPayReq(expId, amount) {
-    console.log("debtReq",expId,amount)
+    try {
+      const resp = await fetch(updateExpenseUrl, configObj)
+      const json = await resp.json()
+      console.log(json)
+    } catch (err) {
+      console.error(err)
+    }
   }
 }
 
@@ -437,10 +465,22 @@ class Debt extends Expense {
     super(budgetId, name, minimumPayment, paymentDate, balance, interestRate, lastPaid, expenseId);
   }
 
+  static async getDebts(){
+    try {
+      const res = await fetch(DEBT_URL)
+      const debts = await res.json()
+      debts.forEach(debt=> {
+         new Debt(debt.budget_id, debt.name, debt.minimum_payment, debt.payment_date, debt.balance, debt.interest_rate, debt.last_paid, debt.id)
+      })
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   addCard() {
     let debtCard = super.addCard()
     let debtCardInfo = debtCard.querySelector("ul")
-    this.updateDropdownBalance()
+    Debt.updateDropdownBalance(this.balance)
     
     debtCardInfo.append(createLi(this.id, `Remaining balance is ${this.balance}.`))
     debtCardInfo.append(createLi(this.id, `The interest rate is ${this.interestRate}`))
@@ -449,11 +489,11 @@ class Debt extends Expense {
     debtCard.classList.add("debtCard")
   }
 
-  updateDropdownBalance(){
-    let prevAmt = parseInt(spendingCardDropdown.getAttribute("totalDebt"))
-    let newAmt = prevAmt += this.balance
+  static updateDropdownBalance(amount){
+    let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalDebt"))
+    let newAmt = parseFloat(prevAmt + amount).toFixed(2);
     spendingCardDropdown.setAttribute("totalDebt", newAmt)
-    let totalDebtP = document.createElement("p")
+    let totalDebtP = document.getElementById("totalDebtP") ?? createParagraph("totalDebtP")
     totalDebtP.innerText = `Total Debt - ${newAmt}`
     spendingCardDropdown.append(totalDebtP)
   }
@@ -478,56 +518,42 @@ class Debt extends Expense {
       .catch(error => alert("There was an error: "+error.message+"."));
   }
 
-  removeDebtReq(button){
+  async removeDebtReq(button){
     let deleteDebtUrl = `${DEBT_URL}/${button.target.parentElement.id}`
     let configObj = { method: "DELETE", headers: JSON_Headers}
 
-    return fetch(deleteDebtUrl, configObj)
-            .then(response => response.json())
-            .then(json => {
-              if (json.error) {
-                console.log(json)
-              } else {
-                button.target.parentElement.remove()
-              }
-            })
-            .catch(error => alert("There was an error: "+error.message));
+    try {
+      const resp = await fetch(deleteDebtUrl, configObj)
+      const json = await resp.json()
+      Expense.updateDropdownBills(0-json.minimum_payment)
+      Debt.updateDropdownBalance(0-json.balance)
+      button.target.parentElement.remove()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  static async submitPayment(debtId, amount) {
+    let updateDebtUrl = `${DEBT_URL}/${debtId}`
+    let formData = {
+      "lastPaid": "today",
+      "payment": amount
+    }
+    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
+
+    try {
+      const resp = await fetch(updateDebtUrl, configObj)
+      const json = await resp.json()
+      // subtract payment from Balance
+      // change last paid to today
+      console.log(json)
+    } catch (err) {
+      console.error(err)
+    }
   }  
 }
 
-class Budget {
-  priorityButton = document.querySelector("button.priority")
-  
-  constructor (id, priority) {
-    this.id = id
-    this.priority = priority
-    this.setUpPriorityButton()
-  }
-
-  setUpPriorityButton(){
-    this.priorityButton.innerText = this.priority
-    this.priorityButton.onclick = () => this.sendPriorityUpdate()
-  }
-
-  togglePriorityText() {
-    if (this.priorityButton.innerText == "Interest") return "Payoff"
-    if (this.priorityButton.innerText != "Interest") return "Interest"
-  }
-  
-  sendPriorityUpdate() {
-    let updateBudgetUrl = `${BUDGET_URL}/${this.id}`
-    
-    let formData = { "priority": this.togglePriorityText() };
-    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
-  
-    return fetch(updateBudgetUrl,configObj)
-      .then(response => response.json())
-      .then(json => this.priorityButton.innerText = json.priority)
-      .catch(error => alert("There was an error: "+error.message+"."));
-  }
-
-}
-  
+ 
 document.addEventListener('DOMContentLoaded', ()=>{
   fetch(BUDGET_URL)
     .then(res=>res.json())

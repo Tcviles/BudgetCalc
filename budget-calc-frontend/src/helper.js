@@ -53,7 +53,7 @@ function createOption(value, type, text) {
   return option
 }
 
-function toggleForm(form){
+function toggleHidden(form){
   if (form.classList.contains("hidden")) return form.classList.remove("hidden")
   if (!form.classList.contains("hidden")) return form.classList.add("hidden")
 }
