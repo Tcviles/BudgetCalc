@@ -33,9 +33,6 @@ class Budget {
 
  class User {
   newUserForm = document.getElementById("newUserForm")
-  incomeCardContent = document.getElementById("incomeCardContent")
-  incomeCardDropdown = document.getElementById("incomeCardDropdown")
-  
   constructor (budgetId = "", firstName="",  income=0, jobs = [], userId = ""){
     this.budgetId = budgetId
     this.name = firstName
@@ -48,8 +45,8 @@ class Budget {
   }
   
   generateIncomeCard(listOfUsers) {
-    this.incomeCardDropdown.innerHTML = `<p>Total Income - ${this.calculateTotalIncome(listOfUsers)}</p>`
-    this.incomeCardDropdown.onclick = this.toggleIncomeContent
+    document.getElementById("totalIncome").innerText = `Total Income - ${this.calculateTotalIncome(listOfUsers)}`
+    document.getElementById("incomeCardDropdown").onclick = this.toggleIncomeContent
     this.renderUsers(listOfUsers)
     this.connectNewUserForm()
     new Job().connectNewIncomeForm()
@@ -60,8 +57,7 @@ class Budget {
   }
   
   toggleIncomeContent(){
-    if (incomeCardContent.classList.contains("hidden")) return incomeCardContent.classList.remove("hidden")
-    if (!incomeCardContent.classList.contains("hidden")) return incomeCardContent.classList.add("hidden")
+    toggleHidden(document.getElementById("incomeCardContent"))
   }
   
   renderUsers(users) {
@@ -258,9 +254,6 @@ class Job {
 class Expense {
   newExpenseForm = document.getElementById("newExpenseForm")
   newPaymentForm = document.getElementById("newPaymentForm")
-  expensesCard = document.querySelector(".expensesCard")
-  spendingCardContent = document.getElementById("spendingCardContent")
-  spendingDropdown = document.getElementById("spendingCardDropdown")
   constructor(budgetId="", name="", minimumPayment="", paymentDate="",  balance=0, interestRate=0, lastPaid="", expenseId=""){
     this.budgetId = budgetId
     this.name = name
@@ -275,40 +268,9 @@ class Expense {
     if (name != "") return this.submitNewExpenseReq()
   }
   
-  generateSpendingCard(){
-    this.resetExpensesCard()
-    Expense.getExpenses()
-    Debt.getDebts()
-  }
-
-  resetExpensesCard(){
-    this.expensesCard.innerHTML=""
-    this.spendingDropdown.setAttribute("totalBills",0)
-    this.spendingDropdown.setAttribute("totalDebt",0)
-    this.spendingDropdown.onclick = this.toggleSpendingContent
-    this.connectNewExpenseForm()
-    this.connectNewPaymentForm() 
-  }
-
-  static async getExpenses(){
-    try {
-      const res = await fetch(EXPENSE_URL)
-      const expenses = await res.json()
-      expenses.forEach(expense=> {
-          new Expense(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, 0, 0, expense.last_paid, expense.id)
-      })
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  
-  toggleSpendingContent(){ toggleHidden(spendingCardContent) }
-
-  static updateDropdownBills(amt){
-    let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
-    let newAmt = parseFloat(prevAmt + amt).toFixed(2);
-    spendingCardDropdown.setAttribute("totalBills", newAmt)
-    document.getElementById("totalMinPayments").innerText = `Total Minimum Payments - ${newAmt}`
+  accountForZero() {
+    Expense.updateDropdownBills(0);
+    Debt.updateDropdownBalance(0);
   }
 
   addCard(){
@@ -321,7 +283,7 @@ class Expense {
     })
     expenseCard.append(makePaymentBtn)
     expenseCard.append(createButton("remove","Remove Expense", this.removeExpReq))
-    this.expensesCard.append(expenseCard)
+    document.getElementById("expensesCard").append(expenseCard)
 
     return expenseCard
   }
@@ -338,8 +300,14 @@ class Expense {
 
     return expenseCard
   }
-  
 
+  
+  connectFormsAndToggles(){
+    document.getElementById("spendingCardDropdown").onclick = this.toggleSpendingContent
+    this.connectNewExpenseForm()
+    this.connectNewPaymentForm() 
+  }
+  
   connectNewExpenseForm(){
     newExpenseForm.addEventListener("submit", newExpenseEvent => {
       newExpenseEvent.preventDefault()
@@ -360,19 +328,56 @@ class Expense {
     document.querySelector("button.addExpense").onclick = this.toggleNewExpenseForm
   }
 
-  updateMinPmtEvt() {
-    document.querySelector(".checkbox").addEventListener("click", () => {
-      if (document.querySelector("input:checked")) {
-        document.getElementById("updExpPmtAmt").value = this.minimumPayment
+  connectNewPaymentForm(){
+    newPaymentForm.addEventListener("submit", newPaymentEvent => {
+      newPaymentEvent.preventDefault()
+      let expenseCardId = newPaymentForm.getAttribute("expenseCardId")
+      let amount = newPaymentEvent.target.paymentAmt.value;
+      if (expenseCardId.includes("debt")) {
+        Debt.submitPayment(expenseCardId, amount)
       } else {
-        document.getElementById("updExpPmtAmt").value = 0
+        Expense.submitPayment(expenseCardId, amount)
       }
     })
   }
-  
-  toggleNewExpenseForm(){ 
-    hideForm(newPaymentForm)
-    toggleHidden(newExpenseForm) 
+
+  generateSpendingCard(){
+    Expense.getExpenses()
+    Debt.getDebts()
+    this.connectFormsAndToggles()
+    this.accountForZero()
+  }
+
+  static async getExpenses(){
+    try {
+      const res = await fetch(EXPENSE_URL)
+      const expenses = await res.json()
+      expenses.forEach(expense=> {
+          new Expense(expense.budget_id, expense.name, expense.minimum_payment, expense.payment_date, 0, 0, expense.last_paid, expense.id)
+      })
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  getTypeId(){ 
+    if (this.balance!="") return `${this.id}debt`
+    return `${this.id}expense` 
+  }
+
+  async removeExpReq(button){
+    let deleteExpUrl = `${EXPENSE_URL}/${button.parentElement.id}`
+    let configObj = { method: "DELETE", headers: JSON_Headers}
+
+    try {
+      const resp = await fetch(deleteExpUrl, configObj)
+      const json = await resp.json()
+      if (json.error) return console.error(json.error)
+      Expense.updateDropdownBills(0 - json.minimum_payment)
+      return button.parentElement.remove()
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   async submitNewExpenseReq(){
@@ -396,19 +401,25 @@ class Expense {
     
   }
 
-  async removeExpReq(button){
-    let deleteExpUrl = `${EXPENSE_URL}/${button.parentElement.id}`
-    let configObj = { method: "DELETE", headers: JSON_Headers}
+  static async submitPayment(expenseCardId, amount) {
+    // amount will be used later
+    let expenseId = parseInt(expenseCardId)
+    let updateExpenseUrl = `${EXPENSE_URL}/${expenseId}`
+    let formData = {"lastPaid": "today"}
+    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
 
     try {
-      const resp = await fetch(deleteExpUrl, configObj)
+      const resp = await fetch(updateExpenseUrl, configObj)
       const json = await resp.json()
-      if (json.error) return console.error(json.error)
-      Expense.updateDropdownBills(0 - json.minimum_payment)
-      return button.parentElement.remove()
+      document.getElementById(`${expenseCardId}LastPaid`).innerText = `Last paid on ${json.last_paid}`
     } catch (err) {
       console.error(err)
     }
+  }
+  
+  toggleNewExpenseForm(){ 
+    hideForm(newPaymentForm)
+    toggleHidden(newExpenseForm) 
   }
   
   toggleNewPaymentForm(){
@@ -426,39 +437,24 @@ class Expense {
       return showForm(newPaymentForm)
     }
   }
+  
+  toggleSpendingContent(){ toggleHidden(document.getElementById("spendingCardContent")) }
 
-  getTypeId(){ 
-    if (this.balance!="") return `${this.id}debt`
-    return `${this.id}expense` 
+  static updateDropdownBills(amt){
+    let prevAmt = parseFloat(spendingCardDropdown.getAttribute("totalBills"))
+    let newAmt = parseFloat(prevAmt + amt).toFixed(2);
+    spendingCardDropdown.setAttribute("totalBills", newAmt)
+    document.getElementById("totalMinPayments").innerText = `Total Minimum Payments - ${newAmt}`
   }
 
-  connectNewPaymentForm(){
-    newPaymentForm.addEventListener("submit", newPaymentEvent => {
-      newPaymentEvent.preventDefault()
-      let expenseCardId = newPaymentForm.getAttribute("expenseCardId")
-      let amount = newPaymentEvent.target.paymentAmt.value;
-      if (expenseCardId.includes("debt")) {
-        Debt.submitPayment(expenseCardId, amount)
+  updateMinPmtEvt() {
+    document.querySelector(".checkbox").addEventListener("click", () => {
+      if (document.querySelector("input:checked")) {
+        document.getElementById("updExpPmtAmt").value = this.minimumPayment
       } else {
-        Expense.submitPayment(expenseCardId, amount)
+        document.getElementById("updExpPmtAmt").value = 0
       }
     })
-  }
-
-  static async submitPayment(expenseCardId, amount) {
-    // amount will be used later
-    let expenseId = parseInt(expenseCardId)
-    let updateExpenseUrl = `${EXPENSE_URL}/${expenseId}`
-    let formData = {"lastPaid": "today"}
-    let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
-
-    try {
-      const resp = await fetch(updateExpenseUrl, configObj)
-      const json = await resp.json()
-      document.getElementById(`${expenseCardId}LastPaid`).innerText = `Last paid on ${json.last_paid}`
-    } catch (err) {
-      console.error(err)
-    }
   }
 }
 
