@@ -17,13 +17,14 @@ class DebtsController < ApplicationController
     end
   end  
 
-  def makePayment
+  def update
     debt = Debt.find_by(id: params[:id])
-    payment = params[:paymentAmt]
+    payment = params[:paymentAmt].to_f
     debt.balance -= payment
-    debt.last_paid = Date.today.to_s(:short)
+    if params[:lastPaid] == "today"
+      debt.last_paid = Date.today.to_s(:short)
+    end
     debt.save
-
     render json: DebtSerializer.new(debt).to_serialized_json
   end
 

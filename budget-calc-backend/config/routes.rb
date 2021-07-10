@@ -12,10 +12,11 @@ Rails.application.routes.draw do
 
   get '/expenses' => 'expenses#index'
   post '/expenses' => 'expenses#create'
+  patch '/expenses/:id' => 'expenses#update'
   delete '/expenses/:id' => 'expenses#delete'
 
   get '/debts' => 'debts#index'
   post '/debts' => 'debts#create'
+  patch '/debts/:id' => 'debts#update'
   delete '/debts/:id' => 'debts#delete'
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 end

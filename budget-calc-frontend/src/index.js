@@ -531,7 +531,7 @@ class Debt extends Expense {
     let updateDebtUrl = `${DEBT_URL}/${debtId}`
     let formData = {
       "lastPaid": "today",
-      "payment": amount
+      "paymentAmt": amount
     }
     let configObj = { method: "PATCH", headers: JSON_Headers, body: JSON.stringify(formData) }
 
@@ -539,7 +539,7 @@ class Debt extends Expense {
       const resp = await fetch(updateDebtUrl, configObj)
       const json = await resp.json()
       Debt.updateDropdownBalance(0-amount)
-      document.getElementById(`${expenseCardId}Balance`).innerText = `Remaining balance is ${json.balance}.`
+      document.getElementById(`${expenseCardId}Balance`).innerText = `Remaining balance is ${parseFloat(json.balance).toFixed(2)}.`
       document.getElementById(`${expenseCardId}LastPaid`).innerText = `Last paid on ${json.last_paid}`
     } catch (err) {
       console.error(err)
