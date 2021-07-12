@@ -368,6 +368,7 @@ class Expense {
   async removeExpReq(button){
     let deleteExpUrl = `${EXPENSE_URL}/${button.parentElement.id}`
     let configObj = { method: "DELETE", headers: JSON_Headers}
+    console.log(deleteExpUrl)
 
     try {
       const resp = await fetch(deleteExpUrl, configObj)
